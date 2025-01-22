@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace OpenTap.Metrics.AssetDiscovery;
 
@@ -21,6 +22,35 @@ public interface IAssetDiscovery : OpenTap.ITapPlugin
     DiscoveryResult DiscoverAssets();
 }
 
+/// <summary>
+/// Base class for asset discovery implementations.
+/// This is a convenience class that implements the IAssetDiscovery interface.
+/// </summary>
+[Display("")]
+public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
+{
+    /// <summary>
+    /// A name short name of this asset discovery provider/implementation.
+    /// For use in UIs that list instances. Same function as the Name property on OpenTap.IResource.
+    /// Derived classes should set this property in their constructor.
+    /// </summary>
+    [Browsable(false)]
+    public string Name { get; set; }
+
+    /// <summary>
+    /// Sets the priority of this provider. In case two implementations return the same
+    /// discovered asset (same Identifier), the one from the higher priority provider is used
+    /// </summary>
+    public double Priority { get; set; } = 0;
+
+    public abstract DiscoveryResult DiscoverAssets();
+
+    /// <summary>
+    /// Overrides ToString() to return the Name.
+    /// </summary>
+    public override string ToString() => Name;
+}
+
 public class DiscoveryResult
 {
     /// <summary>
@@ -40,7 +70,6 @@ public class DiscoveryResult
     /// </summary>
     public IEnumerable<DiscoveredAsset> Assets { get; set; }
 }
-
 
 /// <summary>
 /// Represents a discovered asset.

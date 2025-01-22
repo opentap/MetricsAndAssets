@@ -468,7 +468,7 @@ public class MetricManagerTest
         Assert.That(metrics.Length, Is.EqualTo(2));
         foreach (var m in metrics)
         {
-            Assert.That(m.MetaData.Count, Is.EqualTo(3));
+            Assert.That(m.MetaData.Count, Is.EqualTo(4));
             Assert.That(m.MetaData["Model"], Is.EqualTo("N9020"));
             if (m.Info.Source == mxa1)
             {

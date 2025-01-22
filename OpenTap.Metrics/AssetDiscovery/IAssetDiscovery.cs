@@ -79,6 +79,7 @@ public interface IAsset
     /// The manufacturer of the asset. E.g. "Keysight". 
     /// Should map to the first part of the *IDN? SCPI query, or the Vendor ID in a USB descriptor.
     /// </summary>
+    [MetaData(Name = "Manufacturer")]
     public string Manufacturer { get; }
 
     /// <summary>

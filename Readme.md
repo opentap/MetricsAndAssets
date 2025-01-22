@@ -467,3 +467,8 @@ public class MyInstrument : ScpiInstrument, IOnPollMetricCallback, IAsset
     }
 }
 ```
+
+This package also provides `AssetMetricInstrument` and `AssetMetricScpiInstrument` base classes
+that can be used to simplify the implementation in the above example. These classes also implement a 
+mutex to ensure that the instrument is only Opened once at a time to prevent metrics polling from 
+interfering with ongoing TestPlan runs.

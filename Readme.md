@@ -1,4 +1,4 @@
-# OpenTAP Metrics
+# Metrics and Assets
 
 This plugin provides interfaces to push, poll, and subscribe to metrics. This
 can be used to e.g. make periodic measurements on a connected instrument. By
@@ -6,6 +6,11 @@ formalizing the concept of push (event-based) and poll (measurement-based)
 metrics, and providing a common way to produce and consume them, this plugin
 enables a great deal of interoperability between different metric providers and
 listeners.
+
+This package also defines an Asset Discovery plugin type and
+related functionality. This is a semi independent feature, but it is related to
+metrics in that it metrics can be associated with an asset instead of the default
+of associating the metric with the entire system.
 
 ## Poll Metrics
 

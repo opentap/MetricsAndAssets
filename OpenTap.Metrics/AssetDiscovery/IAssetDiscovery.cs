@@ -39,6 +39,11 @@ public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
 {
     private string _name;
 
+    /// <summary>
+    /// A name short name of this asset discovery provider/implementation.
+    /// For use in UIs that list instances. Same function as the Name property on OpenTap.IResource.
+    /// Deriving classes should set this property in their constructor.
+    /// </summary>
     [Display("Asset Discovery Name", "The name of the this asset discovery provider/implementation. ")]
     public string Name
     {

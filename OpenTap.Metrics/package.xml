@@ -19,7 +19,7 @@ $(GitVersion) - Gets the version from Git in the recommended format Major.Minor.
     <PackageDependency Package="OpenTAP" Version="^9.16.4+654f0b6b" />
   </Dependencies>
   <Files>
-    <File Path="Packages/Metrics/OpenTap.Metrics.dll" SourcePath="OpenTap.Metrics.dll">
+    <File Path="Packages/Metrics and Assets/OpenTap.Metrics.dll" SourcePath="OpenTap.Metrics.dll">
         <Sign Certificate="Keysight Technologies, Inc."/>
         <!-- This is being set automatically in the .csproj  -->
         <!-- <SetAssemblyInfo Attributes="Version"/> -->

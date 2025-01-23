@@ -14,7 +14,7 @@ public static class AssetDiscoveryManager
     public static Dictionary<IAssetDiscovery, DiscoveryResult> DiscoverAllAssets()
     {
         Dictionary<IAssetDiscovery, DiscoveryResult> assets = new Dictionary<IAssetDiscovery, DiscoveryResult>();
-        foreach (var provider in GetAssetDiscoveryProviders())
+        foreach (var provider in AssetDiscoverySettings.Current.OrderByDescending(x => x.Priority))  // Higher (numeric value) priority should be used first.
         {
             try
             {
@@ -34,18 +34,6 @@ public static class AssetDiscoveryManager
         return assets;
     }
 
-    private static IEnumerable<IAssetDiscovery> _assetDiscoveryProviders;
-    private static IEnumerable<IAssetDiscovery> GetAssetDiscoveryProviders()
-    {
-        if (_assetDiscoveryProviders == null)
-        {
-            _assetDiscoveryProviders = TypeData.GetDerivedTypes<IAssetDiscovery>().Where(x => x.CanCreateInstance)
-                .Select(x => x.CreateInstance() as IAssetDiscovery)
-                .OrderByDescending(x => x.Priority)  // Higher (numeric value) priority should be used first.
-                .ToList();
-        }
-        return _assetDiscoveryProviders;
-    }
 
     // public static void PushDiscoveredAssets(DiscoveredAsset asset)
     // {

@@ -11,6 +11,14 @@ namespace OpenTap.Metrics.AssetDiscovery;
 public interface IAssetDiscovery : OpenTap.ITapPlugin
 {
     /// <summary>
+    /// A name short name of this asset discovery provider/implementation.
+    /// For use in UIs that list instances. Same function as the Name property on OpenTap.IResource.
+    /// Inheriting classes should set this property in their constructor.
+    /// </summary>
+    [Browsable(false)]
+    string Name { get; set; }
+
+    /// <summary>
     /// Sets the priority of this provider. In case two implementations return the same 
     /// discovered asset (same Identifier), the one from the higher priority provider is used
     /// </summary>
@@ -29,13 +37,21 @@ public interface IAssetDiscovery : OpenTap.ITapPlugin
 [Display("")]
 public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
 {
-    /// <summary>
-    /// A name short name of this asset discovery provider/implementation.
-    /// For use in UIs that list instances. Same function as the Name property on OpenTap.IResource.
-    /// Derived classes should set this property in their constructor.
-    /// </summary>
-    [Browsable(false)]
-    public string Name { get; set; }
+    private string _name;
+
+    [Display("Asset Discovery Name", "The name of the this asset discovery provider/implementation. ")]
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value), "Asset Discovery Name cannot be null.");
+            if (value == _name) return;
+            _name = value;
+            OnPropertyChanged(nameof(Name));
+        }
+    }
 
     /// <summary>
     /// Sets the priority of this provider. In case two implementations return the same

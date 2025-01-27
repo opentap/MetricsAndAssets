@@ -8,7 +8,7 @@
     <TargetFrameworkIdentifier></TargetFrameworkIdentifier>
     <TargetFrameworkVersion></TargetFrameworkVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>10</LangVersion>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
   
   <!-- Automatic assembly versioning in pipeline-->

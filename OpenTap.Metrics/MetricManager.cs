@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using OpenTap.Metrics.Settings;
 
 namespace OpenTap.Metrics;
 
@@ -63,19 +64,27 @@ public static class MetricManager
         List<object> producers = new List<object>();
         foreach (var type in types)
         {
-            // DUT and Instrument settings will explicitly added later if they are configured on the bench,
-            // regardless of whether or not they are IMetricSources.
-            if (type.DescendsTo(typeof(IDut)) || type.DescendsTo(typeof(IInstrument)))
-                continue;
-            if (type.DescendsTo(typeof(ComponentSettings)))
+            try
             {
-                if (ComponentSettings.GetCurrent(type) is IMetricSource producer)
-                    producers.Add(producer);
+                // DUT and Instrument settings will explicitly added later if they are configured on the bench,
+                // regardless of whether or not they are IMetricSources.
+                if (type.DescendsTo(typeof(IDut)) || type.DescendsTo(typeof(IInstrument)))
+                    continue;
+                if (type.DescendsTo(typeof(ComponentSettings)))
+                {
+                    if (ComponentSettings.GetCurrent(type) is IMetricSource producer)
+                        producers.Add(producer);
+                }
+                else
+                {
+                    if (_metricProducers.GetOrAdd(type, t => (IMetricSource)t.CreateInstance()) is IMetricSource m)
+                        producers.Add(m);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                if (_metricProducers.GetOrAdd(type, t => (IMetricSource)t.CreateInstance()) is IMetricSource m)
-                    producers.Add(m);
+                // Avoid failing completely if a metric source is misbehaving
+                log.ErrorOnce(type, $"Error in metric source '{type.Name}': {ex.Message}");
             }
         }
 

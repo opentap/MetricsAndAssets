@@ -438,7 +438,7 @@ public class MyInstrument : ScpiInstrument, IOnPollMetricCallback, IAsset
     [Metadata]
     public string Identifier { get; }
 
-    [Metric("Calibration Date", DefaultPollRate: 86400, DefaultEnabled: true)]
+    [Metric("Calibration Date", DefaultPollRate: 3600, DefaultEnabled: true)]
     public DateTime CalibrationDate { get; private set; }
 
     public void OnPollMetrics(IEnumerable<MetricInfo> metrics)
@@ -471,4 +471,19 @@ public class MyInstrument : ScpiInstrument, IOnPollMetricCallback, IAsset
 This package also provides `AssetMetricInstrument` and `AssetMetricScpiInstrument` base classes
 that can be used to simplify the implementation in the above example. These classes also implement a 
 mutex to ensure that the instrument is only Opened once at a time to prevent metrics polling from 
-interfering with ongoing TestPlan runs.
+interfering with ongoing TestPlan runs. Using these classes, the above example can be simplified to:
+
+```cs
+public class MyInstrument : AssetMetricScpiInstrument
+{
+    [Metric("Calibraion Date", null, MetricKind.PushPoll, DefaultPollRate = 3600, DefaultEnabled = true)]
+    public DateTime CalibrationDate { get; set; }
+
+    protected override void UpdateAssetMetrics()
+    {
+        string calInfoRaw = ScpiQuery("SYSTem:SERVice:MANagement:CALibration:INFormation?"); 
+        var calInfo = JsonConvert.DeserializeObject<Dictionary<string, string>>(calInfoResponse);
+        this.CalibrationDate = DateTime.Parse(calInfo["CalDate"]);
+    }
+}
+```

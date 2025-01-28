@@ -74,13 +74,11 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
                     if (prev == updateStarted) break;
                 }
                 Infos = MetricManager.GetMetricInfos().ToList();
-                foreach (var inf in Infos)
+                var changers = Infos.Select(i => i.Source).OfType<INotifyPropertyChanged>().Distinct();
+                foreach (var ch in changers)
                 {
-                    if (inf.Source is INotifyPropertyChanged ch)
-                    {
-                        ch.PropertyChanged -= Search2;
-                        ch.PropertyChanged += Search2;
-                    }
+                    ch.PropertyChanged -= Search2;
+                    ch.PropertyChanged += Search2;
                 }
                 CacheInvalidated?.Invoke(this, new());
                 long token2 = Interlocked.Exchange(ref updateStarted, 0);

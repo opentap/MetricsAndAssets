@@ -414,7 +414,7 @@ so the results can be collected in KS8500.
 ```cs
 public class MyAssetDiscovery : IAssetDiscovery
 {
-    public IEnumerable<DiscoveredAsset> DiscoverAssets()
+    public DiscoveryResult DiscoverAssets()
     {
         // TODO: Code that queries e.g. the network, or other peripherals to find assets
     }

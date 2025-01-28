@@ -1,19 +1,99 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace OpenTap.Metrics.Settings;
 
 public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
 {
+    private InstrumentSettings prevInstruments = null;
+    private DutSettings prevDuts = null;
+    void SetupAndSearch(object a, object b)
+    {
+        // Update all handlers. If any settings instances were changed
+        if (prevInstruments != null)
+        {
+            prevInstruments.CacheInvalidated -= SetupAndSearch;
+            prevInstruments.CollectionChanged -= SetupAndSearch;
+            prevInstruments.PropertyChanged -= SetupAndSearch;
+        }
+
+        if (prevDuts != null)
+        {
+            prevDuts.CacheInvalidated -= SetupAndSearch;
+            prevDuts.CollectionChanged -= SetupAndSearch;
+            prevDuts.PropertyChanged -= SetupAndSearch; 
+        }
+
+        var ins = InstrumentSettings.Current;
+        var duts = DutSettings.Current;
+        ins.CacheInvalidated += SetupAndSearch;
+        ins.CollectionChanged += SetupAndSearch;
+        ins.PropertyChanged += SetupAndSearch;
+        duts.CacheInvalidated += SetupAndSearch;
+        duts.CollectionChanged += SetupAndSearch;
+        duts.PropertyChanged += SetupAndSearch;
+        prevInstruments = ins;
+        prevDuts = duts; 
+        Search();
+    }
+    public MetricInfoTypeDataSearcher()
+    {
+        SetupAndSearch(null, null);
+    }
+
+    private long updateStarted = 0;
+
+    private void Search2(object a, object b)
+    {
+        Search();
+    }
     public void Search()
     {
+        // Postpone updates while they happen within this interval
+        const int debounce_ms = 200;
+        // Don't postpone the update indefinitely..
+        const int debounce_max_ms = 10000;
+        var processingToken = Interlocked.Increment(ref updateStarted);
+        if (processingToken != 1) return;
+        
         // We need to search in a thread because GetMetricInfos() will cause a recursive call which will deadlock otherwise.
         TapThread.Start(() =>
         {
-            Infos = MetricManager.GetMetricInfos().ToList(); 
-            CacheInvalidated?.Invoke(this, new());
+            try
+            {
+                var sw = Stopwatch.StartNew();
+                while (sw.Elapsed < TimeSpan.FromMilliseconds(debounce_max_ms))
+                {
+                    var prev = updateStarted;
+                    TapThread.Sleep(debounce_ms);
+                    if (prev == updateStarted) break;
+                }
+                Infos = MetricManager.GetMetricInfos().ToList();
+                foreach (var inf in Infos)
+                {
+                    if (inf.Source is INotifyPropertyChanged ch)
+                    {
+                        ch.PropertyChanged -= Search2;
+                        ch.PropertyChanged += Search2;
+                    }
+                }
+                CacheInvalidated?.Invoke(this, new());
+                long token2 = Interlocked.Exchange(ref updateStarted, 0);
+                if (token2 != 1)
+                {
+                    // a search was inititated during sleep
+                    Search();
+                }
+            }
+            catch
+            {
+                Interlocked.Exchange(ref updateStarted, 0); 
+            }
         });
     } 
 

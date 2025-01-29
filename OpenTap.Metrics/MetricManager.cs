@@ -198,6 +198,9 @@ public static class MetricManager
     static readonly TraceSource log = Log.CreateSource(nameof(MetricManager));
 
     /// <summary> Poll metrics. </summary>
+    public static IEnumerable<IMetric> PollMetrics(IEnumerable<IMetricInfo> interestSet) =>
+        PollMetrics(interestSet.OfType<MetricInfo>());
+    /// <summary> Poll metrics. </summary>
     public static IEnumerable<IMetric> PollMetrics(IEnumerable<MetricInfo> interestSet)
     {
         var interest = interestSet.Where(i => i.Kind.HasFlag(MetricKind.Poll)).ToHashSet();

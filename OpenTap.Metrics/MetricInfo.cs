@@ -15,6 +15,7 @@ namespace OpenTap.Metrics;
 // The MetricInfo should probably never have been part of the public API anyway.
 public interface IMetricInfo : ITapPlugin
 { 
+    object Source { get; }
     MetricType Type { get; }
     bool DefaultEnabled { get; }
     MetricKind Kind { get; }

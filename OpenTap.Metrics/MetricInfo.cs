@@ -13,7 +13,7 @@ namespace OpenTap.Metrics;
 // and if it is an instrument, it must have at least one member.
 // For now, let's just try to create a coherent interface.
 // The MetricInfo should probably never have been part of the public API anyway.
-public interface IMetricInfo
+public interface IMetricInfo : ITapPlugin
 { 
     MetricType Type { get; }
     bool DefaultEnabled { get; }
@@ -22,6 +22,31 @@ public interface IMetricInfo
     string GroupName { get; }
     string MetricFullName { get; }
     int DefaultPollRate { get; }
+}
+
+internal class AbstractMetricInfo : MetricInfo
+{
+    private bool Equals(AbstractMetricInfo other)
+    {
+        return Member.Equals(other.Member);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (obj is null) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != GetType()) return false;
+        return this.Equals((AbstractMetricInfo)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return Member.GetHashCode();
+    }
+
+    public AbstractMetricInfo(IMemberData mem, string groupName) : base(mem, groupName, null)
+    { 
+    }
 }
 
 /// <summary> Information about a given metric, </summary>

@@ -73,7 +73,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
                     TapThread.Sleep(debounce_ms);
                     if (prev == updateStarted) break;
                 }
-                Infos = MetricManager.GetMetricInfos().ToList();
+                Infos = MetricManager.GetMetricInfos().Concat(MetricManager.GetResourceMetricInfos()).ToList();
                 var changers = Infos.Select(i => i.Source).OfType<INotifyPropertyChanged>().Distinct();
                 foreach (var ch in changers)
                 {
@@ -178,5 +178,5 @@ class MetricInfoTypeData : ITypeData
 
     public ITypeData BaseType { get; }
 
-    public bool CanCreateInstance => true;
+    public bool CanCreateInstance => MetricInfo is not AbstractMetricInfo;
 }

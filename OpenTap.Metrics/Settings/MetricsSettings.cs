@@ -6,13 +6,13 @@ using System.Xml.Serialization;
 
 namespace OpenTap.Metrics.Settings;
 
-public interface IMetricsSettingsRow : ITapPlugin
+public interface IMetricsSettingsItem : ITapPlugin
 {
     public MetricInfo SelectedMetric { get; }
 }
 
 [Display("Metric", "The configuration for a specific metric.")]
-public class MetricsSettingsRow : IMetricsSettingsRow
+public class MetricsSettingsItem : IMetricsSettingsItem
 {
     public override string ToString() => Name;
     public string Name => SelectedMetric?.MetricFullName ?? "Unknown";
@@ -171,7 +171,7 @@ public class MetricsSettingsRow : IMetricsSettingsRow
     [Browsable(false)]
     [XmlIgnore]
     public MetricInfo SelectedMetric { get; set; }
-    public MetricsSettingsRow()
+    public MetricsSettingsItem()
     {
         SelectedMetricString = AvailableMetricNames.FirstOrDefault();
     }
@@ -179,7 +179,7 @@ public class MetricsSettingsRow : IMetricsSettingsRow
 
 [ComponentSettingsLayout(ComponentSettingsLayoutAttribute.DisplayMode.DataGrid)]
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
-public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsRow>
+public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>
 {
     
 }

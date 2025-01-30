@@ -52,59 +52,43 @@ public class MetricsSettingsItem : IMetricsSettingsItem
     public int[] SuggestedPollRates => new int[] { 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400 }
         .Concat(Metric.DefaultPollRate == 0 ? [] : [Metric.DefaultPollRate]).OrderBy(x => x).Distinct().ToArray();
 
+    private string secondsToReadableString(int v)
+    {
+        var unit = "Second";
+        if (v > 0 && v % 60 == 0)
+        {
+            v /= 60;
+            unit = "Minute";
+
+            if (v % 60 == 0)
+            {
+                v /= 60;
+                unit = "Hour";
+
+                if (v % 24 == 0)
+                {
+                    v /= 24;
+                    unit = "Day";
+                }
+            }
+        }
+
+        var plural = v != 1;
+        return plural ? $"Every {v} {unit}s" : $"Every {unit}";
+    }
     [Browsable(false)] public bool CanPoll => Metric.Kind.HasFlag(MetricKind.Poll);
     string[] getSuggestedPollRateStrings()
     {
         if (!CanPoll)
             return ["Disabled"];
-        Dictionary<int, string> lookup = new()
-        {
-            [5] = "Every 5 Seconds",
-            [10] = "Every 10 Seconds",
-            [30] = "Every 30 Seconds",
-            [60] = "Every Minute",
-            [300] = "Every 5 Minutes",
-            [900] = "Every 15 Minutes",
-            [1800] = "Every 30 Minutes", 
-            [3600] = "Every Hour", 
-            [7200] = "Every 2 Hours", 
-            [86400] = "Every Day", 
-        };
         var spr = SuggestedPollRates;
         var strings = new string[spr.Length];
         for (int i = 0; i < strings.Length; i++)
         {
-            if (lookup.TryGetValue(spr[i], out var s))
-            {
-                strings[i] = s;
-                if (spr[i] == Metric.DefaultPollRate && Metric.DefaultPollRate != 0)
-                {
-                    strings[i] += " (Default)";
-                }
-            }
-            else
-            {
-                var unit = "Seconds";
-                var v = spr[i];
-                if (v > 0 && v % 60 == 0)
-                {
-                    v /= 60;
-                    unit = "Minutes";
-                }
-
-                if (v > 0 && v % 60 == 0)
-                {
-                    v /= 60;
-                    unit = "Hours";
-                }
-
-                if (v > 0 && v % 24 == 0)
-                {
-                    v /= 24;
-                    unit = "Days";
-                }
-                strings[i] = $"Every {v} {unit} (Default)";
-            }
+            var pollrate = spr[i];
+            var readable = secondsToReadableString(pollrate);
+            if (Metric.DefaultPollRate == pollrate) readable += " (Default)";
+            strings[i] = readable;
         }
 
         return strings;

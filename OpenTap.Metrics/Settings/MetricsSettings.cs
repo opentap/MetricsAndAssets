@@ -6,8 +6,16 @@ using System.Xml.Serialization;
 
 namespace OpenTap.Metrics.Settings;
 
-public class MetricsSettingsRow : ITapPlugin
+public interface IMetricsSettingsRow : ITapPlugin
 {
+    public MetricInfo SelectedMetric { get; }
+}
+
+[Display("Metric", "The configuration for a specific metric.")]
+public class MetricsSettingsRow : IMetricsSettingsRow
+{
+    public override string ToString() => Name;
+    public string Name => SelectedMetric?.MetricFullName ?? "Unknown";
     private string _selectedMetricString;
 
     [Display("Metric", "The full name of this metric.", Order: 1)]
@@ -21,8 +29,8 @@ public class MetricsSettingsRow : ITapPlugin
             SelectedMetric = getSelectedMetric();
             if (CanPoll)
             {
-                PollRateString = AvailablePollRateStrings.FirstOrDefault(s => s.Contains("Default")) ??
-                                 AvailablePollRateStrings[SuggestedPollRates.IndexOf(300)];
+                var pollrate = SelectedMetric.DefaultPollRate == 0 ? 300 : SelectedMetric.DefaultPollRate;
+                PollRateString = AvailablePollRateStrings[SuggestedPollRates.IndexOf(pollrate)];
             }
             else
             {
@@ -171,34 +179,7 @@ public class MetricsSettingsRow : ITapPlugin
 
 [ComponentSettingsLayout(ComponentSettingsLayoutAttribute.DisplayMode.DataGrid)]
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
-public class MetricsSettings : ComponentSettingsList<MetricsSettings, MetricsSettingsRow>
+public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsRow>
 {
     
-}
-
-[Display("First Metric Source")]
-public class TestMetricSource : IMetricSource
-{
-    private int _counter;
-
-    [Metric("Counter", DefaultEnabled = true, DefaultPollRate = 180)]
-    public int Counter => _counter++;
-    
-    [Metric]
-    public DateTime CalibrationDate => DateTime.Now;
-}
-
-[Display("Other Metric Source")]
-public class TestMetricSource2 : IMetricSource
-{
-    private int _counter;
-
-    [Metric("Counter")]
-    public int Counter => _counter++;
-    
-    [Metric(DefaultPollRate = 86400 * 2)]
-    public DateTime CalibrationDate => DateTime.Now;
-    
-    [Metric(kind: MetricKind.Push)]
-    public int MyPollMetric { get; set; }
 }

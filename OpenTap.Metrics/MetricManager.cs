@@ -56,17 +56,6 @@ public static class MetricManager
     /// <summary> Returns true if a metric has interest. </summary>
     public static bool HasInterest(MetricInfo metric) => _interestLookup.Values.Any(x => x.Contains(metric));
 
-    internal static IEnumerable<AbstractMetricInfo> GetResourceMetricInfos()
-    {
-        foreach (var resourceMetric in TypeData.GetDerivedTypes<IMetricSource>().Where(td => td.DescendsTo(typeof(IDut)) || td.DescendsTo(typeof(IInstrument))))
-        {
-            foreach (var m in resourceMetric.GetMembers())
-            {
-                yield return new AbstractMetricInfo(m, resourceMetric.GetDisplayAttribute().GetFullName());
-            }
-        }
-    }
-
     /// <summary> Get information about the metrics available to query. </summary>
     /// <returns></returns>
     public static IEnumerable<MetricInfo> GetMetricInfos()
@@ -197,9 +186,6 @@ public static class MetricManager
 
     static readonly TraceSource log = Log.CreateSource(nameof(MetricManager));
 
-    /// <summary> Poll metrics. </summary>
-    public static IEnumerable<IMetric> PollMetrics(IEnumerable<IMetricInfo> interestSet) =>
-        PollMetrics(interestSet.OfType<MetricInfo>());
     /// <summary> Poll metrics. </summary>
     public static IEnumerable<IMetric> PollMetrics(IEnumerable<MetricInfo> interestSet)
     {

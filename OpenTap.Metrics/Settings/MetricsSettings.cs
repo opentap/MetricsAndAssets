@@ -8,14 +8,14 @@ namespace OpenTap.Metrics.Settings;
 
 public interface IMetricsSettingsItem : ITapPlugin
 {
-    public MetricInfo SelectedMetric { get; }
+    public MetricInfo Metric { get; }
 }
 
 [Display("Metric", "The configuration for a specific metric.")]
 public class MetricsSettingsItem : IMetricsSettingsItem
 {
     public override string ToString() => Name;
-    public string Name => SelectedMetric?.MetricFullName ?? "Unknown";
+    public string Name => Metric?.MetricFullName ?? "Unknown";
     private string _selectedMetricString;
 
     [Display("Metric", "The full name of this metric.", Order: 1)]
@@ -26,10 +26,10 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         set
         {
             _selectedMetricString = value;
-            SelectedMetric = getSelectedMetric();
+            Metric = getSelectedMetric();
             if (CanPoll)
             {
-                var pollrate = SelectedMetric.DefaultPollRate == 0 ? 300 : SelectedMetric.DefaultPollRate;
+                var pollrate = Metric.DefaultPollRate == 0 ? 300 : Metric.DefaultPollRate;
                 PollRateString = AvailablePollRateStrings[SuggestedPollRates.IndexOf(pollrate)];
             }
             else
@@ -42,17 +42,17 @@ public class MetricsSettingsItem : IMetricsSettingsItem
     /// <summary> The type of this metric. </summary>
     [Browsable(true)]
     [Display("Type", Description: "The type of this metric.", Order: 3)]
-    public MetricType Type => SelectedMetric.Type;
+    public MetricType Type => Metric.Type;
 
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     [Display("Kind", "The kind of this metric.", Order: 4), Browsable(true)]
-    public MetricKind Kind => SelectedMetric.Kind; 
+    public MetricKind Kind => Metric.Kind; 
 
     [Browsable(false)]
     public int[] SuggestedPollRates => new int[] { 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400 }
-        .Concat(SelectedMetric.DefaultPollRate == 0 ? [] : [SelectedMetric.DefaultPollRate]).OrderBy(x => x).Distinct().ToArray();
+        .Concat(Metric.DefaultPollRate == 0 ? [] : [Metric.DefaultPollRate]).OrderBy(x => x).Distinct().ToArray();
 
-    [Browsable(false)] public bool CanPoll => SelectedMetric.Kind.HasFlag(MetricKind.Poll);
+    [Browsable(false)] public bool CanPoll => Metric.Kind.HasFlag(MetricKind.Poll);
     string[] getSuggestedPollRateStrings()
     {
         if (!CanPoll)
@@ -77,7 +77,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
             if (lookup.TryGetValue(spr[i], out var s))
             {
                 strings[i] = s;
-                if (spr[i] == SelectedMetric.DefaultPollRate && SelectedMetric.DefaultPollRate != 0)
+                if (spr[i] == Metric.DefaultPollRate && Metric.DefaultPollRate != 0)
                 {
                     strings[i] += " (Default)";
                 }
@@ -127,7 +127,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
             if (m.MetricFullName == SelectedMetricString) continue;
             try
             {
-                if (MetricsSettings.Current.Any(x => x.SelectedMetric?.MetricFullName == m.MetricFullName))
+                if (MetricsSettings.Current.Any(x => x.Metric?.MetricFullName == m.MetricFullName))
                     infos.RemoveAt(i);
             }
             catch
@@ -170,7 +170,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     [Browsable(false)]
     [XmlIgnore]
-    public MetricInfo SelectedMetric { get; set; }
+    public MetricInfo Metric { get; set; }
     public MetricsSettingsItem()
     {
         SelectedMetricString = AvailableMetricNames.FirstOrDefault();

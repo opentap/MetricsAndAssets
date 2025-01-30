@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
@@ -25,6 +23,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         get => _selectedMetricString;
         set
         {
+            if (_selectedMetricString == value) return;
             _selectedMetricString = value;
             Metric = getSelectedMetric();
             if (CanPoll)
@@ -76,7 +75,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         var plural = v != 1;
         return plural ? $"Every {v} {unit}s" : $"Every {unit}";
     }
-    [Browsable(false)] public bool CanPoll => Metric.Kind.HasFlag(MetricKind.Poll);
+    [Browsable(false)] public bool CanPoll => Metric?.Kind.HasFlag(MetricKind.Poll) ?? false;
     string[] getSuggestedPollRateStrings()
     {
         if (!CanPoll)
@@ -96,11 +95,24 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     [Browsable(false)] public int PollRate => SuggestedPollRates[AvailablePollRateStrings.IndexOf(PollRateString)];
 
-    public string[] AvailablePollRateStrings => getSuggestedPollRateStrings();
+    [Browsable(false)]
+    public string[] AvailablePollRateStrings { get; set; }
+
+    private string _pollRateString;
+
     [Display("Poll Rate", "The poll rate of this metric.", Order: 5)]
     [AvailableValues(nameof(AvailablePollRateStrings))]
     [EnabledIf(nameof(CanPoll))]
-    public string PollRateString { get; set; } 
+    public string PollRateString
+    {
+        get => _pollRateString;
+        set
+        {
+            if (!AvailablePollRateStrings.Contains(value))
+                return;
+            _pollRateString = value;
+        }
+    }
 
     private MetricInfo[] getAvailableMetrics()
     {
@@ -130,31 +142,29 @@ public class MetricsSettingsItem : IMetricsSettingsItem
     {
         if (AvailableMetrics is { Length: > 0 })
         {
-            var idx = IndexOf(SelectedMetricString);
-            if (idx != -1)
+            var idx = AvailableMetricNames.IndexOf(SelectedMetricString);
+            if (idx >= 0 && idx < AvailableMetrics.Length)
             {
                 return AvailableMetrics[idx];
             }
         }
 
-        return null;
+        return null; 
+    }
 
-        int IndexOf(string s)
+    private MetricInfo _metric;
+    [Browsable(false)]
+    [XmlIgnore]
+    public MetricInfo Metric
+    {
+        get => _metric;
+        set
         {
-            var av = AvailableMetricNames;
-            for (int i = 0; i < av.Length; i++)
-            {
-                if (av[i] == s)
-                    return i;
-            }
-
-            return -1;
+            _metric = value;
+            AvailablePollRateStrings = getSuggestedPollRateStrings();
         }
     }
 
-    [Browsable(false)]
-    [XmlIgnore]
-    public MetricInfo Metric { get; set; }
     public MetricsSettingsItem()
     {
         SelectedMetricString = AvailableMetricNames.FirstOrDefault();

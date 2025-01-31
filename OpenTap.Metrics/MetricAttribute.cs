@@ -21,8 +21,13 @@ public class MetricAttribute : Attribute
     /// <summary> 
     /// The suggested default poll rate of the metric, in seconds. 
     /// This is a hint to the client. A UI is free to ignore this hint (or round it up/down).
+    ///
+    /// We recommend one of the following values, if applicable:
+    /// 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400
+    /// These values will be displayed nicely in all UIs, and polling of different metrics in these intervals
+    /// can easily be batched by metric consumers.
     /// </summary>
-    public int DefaultPollRate { get; set; } = 300;
+    public int DefaultPollRate { get; set; }
 
     /// <summary> 
     /// Suggestion to clients on whether to poll this metric by default. 

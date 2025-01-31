@@ -8,7 +8,15 @@ using System.ComponentModel;
 using System.Linq;
 
 namespace OpenTap.Metrics;
-  
+
+internal class AbstractMetricInfo : MetricInfo
+{
+    public new Type Source { get; }
+    public AbstractMetricInfo(IMemberData mem, string groupName, Type source) : base(mem, groupName, source)
+    {
+        Source = source;
+    } 
+}
 /// <summary> Information about a given metric, </summary>
 public class MetricInfo
 {

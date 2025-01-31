@@ -8,17 +8,27 @@ namespace OpenTap.Metrics.Settings;
 public interface IMetricsSettingsItem : ITapPlugin
 {
     public MetricInfo Metric { get; }
+    public int PollRate { get; }
 }
 
 [Display("Metric", "The configuration for a specific metric.")]
-public class MetricsSettingsItem : IMetricsSettingsItem
+[Browsable(false)]
+public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
 {
+    // KS8400 uses `ToString()` to get the name of this item
+    // Runner gets the `Name` property with reflection
     public override string ToString() => Name;
-    public string Name => Metric?.MetricFullName ?? "Unknown";
-    private string _selectedMetricString;
 
+    [Browsable(true)]
+    [Display("Group", "The group of this metric.", Order: 1.0)]
+    public string MetricGroup => Metric?.GroupName ?? "Unknown";
+    [Browsable(true)]
+    [Display("Name", "The name of this metric.", Order: 1.1)]
+    public string Name => Metric?.Name ?? "Unknwon";
+
+    private string _selectedMetricString;
     [Display("Metric", "The full name of this metric.", Order: 1)]
-    [AvailableValues(nameof(AvailableMetricNames))]
+    [Browsable(false)]
     public string SelectedMetricString
     {
         get => _selectedMetricString;
@@ -26,7 +36,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         {
             if (_selectedMetricString == value) return;
             _selectedMetricString = value;
-            Metric = getSelectedMetric();
+            Metric = MetricManager.GetMetricByName(value);
             if (CanPoll)
             {
                 var pollrate = Metric.DefaultPollRate == 0 ? 300 : Metric.DefaultPollRate;
@@ -41,7 +51,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     /// <summary> The type of this metric. </summary>
     [Browsable(true)]
-    [Display("Type", Description: "The type of this metric.", Order: 3)]
+    [Display("Type", "The type of this metric.", Order: 3)]
     public MetricType Type => Metric.Type;
 
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
@@ -49,8 +59,8 @@ public class MetricsSettingsItem : IMetricsSettingsItem
     public MetricKind Kind => Metric.Kind;
 
     [Browsable(false)]
-    public int[] SuggestedPollRates => new int[] { 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400 }
-        .Concat(Metric.DefaultPollRate == 0 ? [] : [Metric.DefaultPollRate]).OrderBy(x => x).Distinct().ToArray();
+    [XmlIgnore]
+    public List<int> SuggestedPollRates { get; private set; }
 
     private string secondsToReadableString(int v)
     {
@@ -78,13 +88,12 @@ public class MetricsSettingsItem : IMetricsSettingsItem
     }
 
     [Browsable(false)] public bool CanPoll => Metric?.Kind.HasFlag(MetricKind.Poll) ?? false;
-
-    string[] getSuggestedPollRateStrings()
+    string[] getPollRates()
     {
         if (!CanPoll)
             return ["Disabled"];
         var spr = SuggestedPollRates;
-        var strings = new string[spr.Length];
+        var strings = new string[spr.Count];
         for (int i = 0; i < strings.Length; i++)
         {
             var pollrate = spr[i];
@@ -98,7 +107,9 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     [Browsable(false)] public int PollRate => SuggestedPollRates[AvailablePollRateStrings.IndexOf(PollRateString)];
 
-    [Browsable(false)] public string[] AvailablePollRateStrings { get; set; }
+    [Browsable(false)]
+    [XmlIgnore]
+    public string[] AvailablePollRateStrings { get; private set; }
 
     private string _pollRateString;
 
@@ -116,43 +127,6 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         }
     }
 
-    private MetricInfo[] getAvailableMetrics()
-    {
-        var infos = MetricManager.GetMetricInfos().ToList();
-        for (int i = infos.Count - 1; i >= 0; i--)
-        {
-            var m = infos[i];
-            if (m.MetricFullName == SelectedMetricString) continue;
-            try
-            {
-                if (MetricsSettings.Current.Any(x => x.Metric?.MetricFullName == m.MetricFullName))
-                    infos.RemoveAt(i);
-            }
-            catch
-            {
-                // ignore
-            }
-        }
-
-        return infos.ToArray();
-    }
-
-    public MetricInfo[] AvailableMetrics => getAvailableMetrics();
-    [Browsable(false)] public string[] AvailableMetricNames => AvailableMetrics.Select(m => m.MetricFullName).ToArray();
-
-    private MetricInfo getSelectedMetric()
-    {
-        if (AvailableMetrics is { Length: > 0 })
-        {
-            var idx = AvailableMetricNames.IndexOf(SelectedMetricString);
-            if (idx >= 0 && idx < AvailableMetrics.Length)
-            {
-                return AvailableMetrics[idx];
-            }
-        }
-
-        return null;
-    }
 
     private MetricInfo _metric;
 
@@ -161,16 +135,40 @@ public class MetricsSettingsItem : IMetricsSettingsItem
     public MetricInfo Metric
     {
         get => _metric;
-        set
+        private set
         {
+            if (Equals(_metric, value)) return;
             _metric = value;
-            AvailablePollRateStrings = getSuggestedPollRateStrings();
+            List<int> defaultPollRates = [5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400];
+            if (_metric.DefaultPollRate != 0)
+            {
+                var insertAt = defaultPollRates.FindIndex(i => i > _metric.DefaultPollRate);
+                if (insertAt == -1) insertAt = defaultPollRates.Count;
+                defaultPollRates.Insert(insertAt, _metric.DefaultPollRate);
+            }
+            SuggestedPollRates = defaultPollRates;
+            AvailablePollRateStrings = getPollRates();
         }
     }
 
     public MetricsSettingsItem()
     {
-        SelectedMetricString = AvailableMetricNames.FirstOrDefault();
+    }
+
+    public MetricsSettingsItem(MetricInfo metric)
+    {
+        SelectedMetricString = metric.MetricFullName;
+    }
+
+    protected override string GetError(string propertyName = null)
+    {
+        if (propertyName == nameof(SelectedMetricString))
+        {
+            if (MetricsSettings.Current.Any(m => !ReferenceEquals(this, m) && m.Metric?.MetricFullName == Metric?.MetricFullName))
+                return "Metric has duplicate entries.";
+        }
+
+        return null;
     }
 }
 
@@ -178,4 +176,14 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
 public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>
 {
+    public override void Initialize()
+    {
+        // TODO: Handle when new Instruments / DUTs are added to the bench (default metrics should be added)
+        // TODO: Handle when Instruments / DUTs are removed from the bench (metrics from such sources should be removed)
+        // TODO: Handle when a plugin providing metrics is uninstalled.
+        foreach (var defaultMetric in MetricManager.GetMetricInfos().Where(m => m.DefaultEnabled))
+        {
+            Add(new MetricsSettingsItem(defaultMetric));
+        }
+    }
 }

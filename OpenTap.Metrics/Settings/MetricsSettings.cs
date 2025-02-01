@@ -6,15 +6,17 @@ namespace OpenTap.Metrics.Settings;
 
 public interface IMetricsSettingsItem : ITapPlugin
 {
-    public MetricInfo Metric { get; }
+    MetricInfo Metric { get; set; }
 }
 
 [Display("Metric", "The configuration for a specific metric.")]
 public class MetricsSettingsItem : IMetricsSettingsItem
 {
-    public override string ToString() => Name;
+    #region Settings
     public string Name => Metric?.MetricFullName ?? "Unknown";
-    private string _selectedMetricString;
+
+    [Display("Enabled", "Whether this metric is enabled.", Order: 0)]
+    public bool IsEnabled { get; set; } = true;
 
     [Display("Metric", "The full name of this metric.", Order: 1)]
     [AvailableValues(nameof(AvailableMetricNames))]
@@ -45,11 +47,29 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     [Display("Kind", "The kind of this metric.", Order: 4), Browsable(true)]
-    public MetricKind Kind => Metric.Kind; 
+    public MetricKind Kind => Metric.Kind;
+
+    [Display("Poll Rate", "The poll rate of this metric.", Order: 5)]
+    [AvailableValues(nameof(AvailablePollRateStrings))]
+    [EnabledIf(nameof(CanPoll))]
+    public string PollRateString
+    {
+        get => _pollRateString;
+        set
+        {
+            if (!AvailablePollRateStrings.Contains(value))
+                return;
+            _pollRateString = value;
+        }
+    }
+    #endregion
 
     [Browsable(false)]
     public int[] SuggestedPollRates => new int[] { 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400 }
         .Concat(Metric.DefaultPollRate == 0 ? [] : [Metric.DefaultPollRate]).OrderBy(x => x).Distinct().ToArray();
+
+    public override string ToString() => Name;
+    private string _selectedMetricString;
 
     private string secondsToReadableString(int v)
     {
@@ -93,26 +113,11 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         return strings;
     }
 
-    [Browsable(false)] public int PollRate => SuggestedPollRates[AvailablePollRateStrings.IndexOf(PollRateString)];
-
     [Browsable(false)]
     public string[] AvailablePollRateStrings { get; set; }
 
     private string _pollRateString;
 
-    [Display("Poll Rate", "The poll rate of this metric.", Order: 5)]
-    [AvailableValues(nameof(AvailablePollRateStrings))]
-    [EnabledIf(nameof(CanPoll))]
-    public string PollRateString
-    {
-        get => _pollRateString;
-        set
-        {
-            if (!AvailablePollRateStrings.Contains(value))
-                return;
-            _pollRateString = value;
-        }
-    }
 
     private MetricInfo[] getAvailableMetrics()
     {
@@ -149,11 +154,10 @@ public class MetricsSettingsItem : IMetricsSettingsItem
             }
         }
 
-        return null; 
+        return null;
     }
 
     private MetricInfo _metric;
-    [Browsable(false)]
     [XmlIgnore]
     public MetricInfo Metric
     {
@@ -173,7 +177,45 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
 [ComponentSettingsLayout(ComponentSettingsLayoutAttribute.DisplayMode.DataGrid)]
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
-public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>
+public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>, IDeserializedCallback
 {
-    
+    public void OnDeserialized()
+    {
+        UpdateDefaultMetrics();
+        InstrumentSettings.Current.CollectionChanged += ResourcesChanged;
+        DutSettings.Current.CollectionChanged += ResourcesChanged;
+    }
+
+    void ResourcesChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        switch (e.Action)
+        {
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Reset:
+            case System.Collections.Specialized.NotifyCollectionChangedAction.Replace:
+                UpdateDefaultMetrics();
+                break;
+        }
+    }
+
+    private void UpdateDefaultMetrics()
+    {
+        var allMetrics = MetricManager.GetMetricInfos();
+        // Are there any new metrics that should be added?
+        foreach (var metric in allMetrics)
+        {
+            if (this.Any(x => x.Metric?.MetricFullName == metric.MetricFullName))
+                continue;
+            if (metric.DefaultEnabled)
+                Add(new MetricsSettingsItem { Metric = metric });
+        }
+        // Are there any metrics that should be removed?
+        for (int i = Count - 1; i >= 0; i--)
+        {
+            var item = this[i];
+            if (!allMetrics.Any(x => x.MetricFullName == item.Metric.MetricFullName))
+                RemoveAt(i);
+        }
+    }
 }

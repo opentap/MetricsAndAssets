@@ -5,8 +5,6 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <TargetFrameworkIdentifier></TargetFrameworkIdentifier>
-    <TargetFrameworkVersion></TargetFrameworkVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>12</LangVersion>
   </PropertyGroup>
@@ -35,7 +33,12 @@
   <ItemGroup>
     <InternalsVisibleTo Include="OpenTap.Metrics.UnitTest" />
   </ItemGroup>
-  
+
+
+  <ItemGroup Condition="$(OS) == 'UNIX' AND '$(Configuration)' == 'Debug'">
+    <OpenTapPackageReference Include="TUI" version="1"/>
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="OpenTAP" Version="$(OpenTapVersion)" />
   </ItemGroup>

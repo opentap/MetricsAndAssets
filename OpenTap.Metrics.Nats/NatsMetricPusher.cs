@@ -15,9 +15,8 @@ namespace OpenTap.Metrics.Nats
     {
         private TraceSource log = Log.CreateSource("NatsMetricPusher");
         private readonly string MetricsStreamName = "Metric";
-        //private RunnerExtension runnerConnection;
+        private RunnerExtension runnerConnection;
         private IJetStream _jetStream;
-
 
         public NatsMetricPusher()
         {
@@ -95,12 +94,5 @@ namespace OpenTap.Metrics.Nats
             log.Info($"Storage '{metricsStream.Name}' is configured. Currently has {streamInfo.State.Messages} messages");
             _jetStream = runnerConnection.Connection.CreateJetStreamContext();
         }
-    }
-
-    internal class MetricDto
-    {
-        public string Name { get; set; }
-        public object Value { get; set; }
-        public Dictionary<string, string> Metadata { get; set; }
     }
 }

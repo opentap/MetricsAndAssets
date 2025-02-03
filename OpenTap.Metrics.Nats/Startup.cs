@@ -6,6 +6,7 @@ namespace OpenTap.Metrics.Nats
         public void LogStartupInfo()
         {
             new NatsMetricPusher();
+            new AssetDiscoveryEndpoint();
         }
     }
 }

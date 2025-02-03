@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <DEBUG_OPENTAP_NATS>true</DEBUG_OPENTAP_NATS>
+        <DEBUG_OPENTAP_NATS>false</DEBUG_OPENTAP_NATS>
         <OutputPath>../bin/$(Configuration)</OutputPath>
     </PropertyGroup>
 
@@ -16,14 +16,12 @@
         <Reference Include="OpenTap.Runner.Client">
             <HintPath>..\..\runner-client-dotnet\OpenTap.Runner.Client.CSharp\bin\Debug\OpenTap.Runner.Client.dll</HintPath>
         </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>..\..\runner-client-dotnet\OpenTap.Runner.Client.CSharp\bin\Debug\Newtonsoft.Json.dll</HintPath>
+        </Reference>
     </ItemGroup>
     <ItemGroup Condition="'$(DEBUG_OPENTAP_NATS)' == 'false'">
         <PackageReference Include="OpenTAP.Runner.Client" Version="2.6.0-beta.3"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
     </ItemGroup>
-    <ItemGroup>
-      <Reference Include="Newtonsoft.Json">
-        <HintPath>..\..\runner-client-dotnet\OpenTap.Runner.Client.CSharp\bin\Debug\Newtonsoft.Json.dll</HintPath>
-      </Reference>
-    </ItemGroup>
-
 </Project>

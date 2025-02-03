@@ -178,20 +178,4 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
 public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>
 {
-    private List<IMetricsSink> _sinks = new List<IMetricsSink>();
-
-    public MetricsSettings()
-    {
-        var metricSinks = TypeData.GetDerivedTypes<IMetricsSink>();
-        foreach (var metricSink in metricSinks)
-        {
-            if (metricSink.CanCreateInstance)
-            {
-                var sink = (IMetricsSink)metricSink.CreateInstance();
-                _sinks.Add(sink);
-            }
-        }
-    }
-
-    [Browsable(false)] public bool Enabled { get; set; } = true;
 }

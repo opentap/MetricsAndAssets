@@ -11,11 +11,11 @@ using OpenTap.Runner.Client;
 
 namespace OpenTap.Metrics.Nats
 {
-    public class NatsMetricPusher : IMetricsSink
+    public class NatsMetricPusher
     {
         private TraceSource log = Log.CreateSource("NatsMetricPusher");
         private readonly string MetricsStreamName = "Metric";
-        private RunnerExtension runnerConnection;
+        //private RunnerExtension runnerConnection;
         private IJetStream _jetStream;
 
 
@@ -41,7 +41,7 @@ namespace OpenTap.Metrics.Nats
             int seconds = 0;
             while (!TapThread.Current.AbortToken.IsCancellationRequested)
             {
-                if (MetricsSettings.Current.Enabled)
+                if (MetricsSettings.Current.Any())
                 {
                     var pollMetrics = MetricsSettings.Current.Where(s => s.Metric.DefaultPollRate % seconds == 0).Select(p => p.Metric).ToList();
                     if (pollMetrics.Any())

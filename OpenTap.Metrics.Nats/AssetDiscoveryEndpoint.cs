@@ -12,13 +12,7 @@ namespace OpenTap.Metrics.Nats
         private readonly TraceSource _log = Log.CreateSource("Asset Discovery");
         public AssetDiscoveryEndpoint()
         {
-            var runnerConnection = RunnerExtension.GetConnection();
-            // OpenTap.Runner.<RunnerId>.Request.AssetDiscovery
-            runnerConnection.Connection.SubscribeAsync($"{runnerConnection.BaseSubject}.Request.AssetDiscovery", (sender, args) =>
-            {
-                var response = DiscoverAllAssets();
-                runnerConnection.Connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
-            });
+            RunnerExtension.MapEndpoint("DiscoverAssets", DiscoverAllAssets);
         }
 
         private AssetDiscoveryResponse DiscoverAllAssets()

@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using OpenTap.Package;
+using OpenTap.Package; 
 
 namespace OpenTap.Metrics.Settings;
 
@@ -76,7 +76,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITy
                     TapThread.Sleep(debounce_ms);
                     if (prev == updateStarted) break;
                 }
-                Infos = MetricManager.GetMetricInfos().Concat(MetricManager.GetAbstractMetricInfos()).ToList();
+                Infos = MetricManager.GetMetricInfos().Concat(MetricManager.GetAbstractMetricInfos()).ToArray();
                 var changers = Infos.Select(i => i.Source).OfType<INotifyPropertyChanged>().Distinct();
                 foreach (var ch in changers)
                 {
@@ -96,16 +96,13 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITy
                 Interlocked.Exchange(ref updateStarted, 0); 
             }
         });
-    } 
+    }
 
-    private List<MetricInfo> Infos { get; set; } = new(); 
+    internal static MetricInfo[] InitialInfos { get; set; } = [];
+    private MetricInfo[] Infos { get; set; } = null; 
 
+    public IEnumerable<ITypeData> Types => [.. (Infos ?? InitialInfos).Select(MetricInfoTypeData.FromMetricInfo)];
 
-    // It is tricky to filter away metrics that are currently configured for several reasons:
-    // 1. Checking the currently configured metrics causes recursive typedata lookups, which can deadlock
-    // 2. This can be called in other situations to discover specializations of IMetricInfo. If a configured MetricInfo
-    // is not recognized as a specialization, we can run into weird behavior.
-    public IEnumerable<ITypeData> Types => Infos.Select(MetricInfoTypeData.FromMetricInfo);
     public ITypeDataSource GetSource(ITypeData typeData)
     {
         if (typeData is MetricInfoTypeData m)
@@ -121,7 +118,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITy
         public string Name => td.Name;
         public string Location => td.SourceAssembly.Location;
 
-        public IEnumerable<ITypeData> Types => td.GetRelatedMetrcInfoTypeDatas();
+        public IEnumerable<ITypeData> Types => td.GetRelatedMetricInfoTypeDatas();
         public IEnumerable<object> Attributes => td.Attributes;
         public IEnumerable<ITypeDataSource> References => [];
         public string Version { get; }
@@ -138,9 +135,10 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITy
     public event EventHandler<TypeDataCacheInvalidatedEventArgs> CacheInvalidated;
 }
 
+[DebuggerDisplay("{Name}")]
 class MetricInfoTypeData : ITypeData
 {
-    public const string MetricTypePrefix = "met:";
+    public const string MetricTypePrefix = "Metric:";
     public MetricInfo MetricInfo { get; }
     private static ConditionalWeakTable<MetricInfo, MetricInfoTypeData> _cache = new();
     private static ConditionalWeakTable<Assembly, ConcurrentBag<MetricInfoTypeData>> _sourceLookup = new();
@@ -159,7 +157,7 @@ class MetricInfoTypeData : ITypeData
         bag.Add(this); 
     }
 
-    internal IEnumerable<MetricInfoTypeData> GetRelatedMetrcInfoTypeDatas() =>
+    internal IEnumerable<MetricInfoTypeData> GetRelatedMetricInfoTypeDatas() =>
         _sourceLookup.GetValue(SourceAssembly, _ => [this]);
 
     private DisplayAttribute displayAttribute = null;

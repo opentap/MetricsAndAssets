@@ -25,7 +25,7 @@ public class EnsureMetricsBrowsableAction : ICustomPackageAction
         {
             foreach (var plugin in file.Plugins)
             {
-                if (plugin.Name.StartsWith(MetricInfoTypeData.MetricTypePrefix))
+                if (plugin.Type.StartsWith(MetricInfoTypeData.MetricTypePrefix))
                 {
                     plugin.Browsable = true;
                 }

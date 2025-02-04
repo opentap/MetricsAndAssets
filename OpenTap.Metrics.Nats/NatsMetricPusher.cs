@@ -135,26 +135,37 @@ namespace OpenTap.Metrics.Nats
         }
     }
 
-    public class NatsMetrics : IMetricSource
+    public class NatsMetrics : IMetricSource, IOnPollMetricsCallback
     {
+        private static readonly TraceSource log = Log.CreateSource("Metrics");
         private readonly RunnerExtension runnerConnection;
 
         [MetaData]
-        public string ServerVersion => "2.10.20";
-        [Metric("Roundtrip time", "Runner", DefaultPollRate = 5, DefaultEnabled = true)]
-        public double RoundtripTime => getRoundtripTime();
+        public string StreamName => NatsMetricPusher.MetricsStreamName;
+        [Metric("Storage Usage [MB]", "Metrics", DefaultPollRate = 15, DefaultEnabled = true)]
+        public double MetricsStreamSize { get; set; }
+        [Metric("Storage Age [h]", "Metrics", DefaultPollRate = 15, DefaultEnabled = false)]
+        public int MetricsStreamAge { get; set; }
 
         public NatsMetrics()
         {
             runnerConnection = RunnerExtension.GetConnection();
         }
 
-        private double getRoundtripTime()
+        public void OnPollMetrics(IEnumerable<MetricInfo> metrics)
         {
-            // Stopwatch stopwatch = Stopwatch.StartNew();
-            // runnerConnection.Connection.Request("OpenTap.RunnerRegistry.Request.Ping", null, 1000);
-            // return stopwatch.ElapsedMilliseconds;
-            return 0.1;
+            try
+            {
+                var jsm = runnerConnection.Connection.CreateJetStreamManagementContext();
+                jsm.GetStreamInfo(StreamName);
+                MetricsStreamSize = jsm.GetStreamInfo(StreamName).State.Bytes / 1024 / 1024;
+                MetricsStreamAge = (DateTime.Now.ToUniversalTime() - jsm.GetStreamInfo(StreamName).State.FirstTime).Hours;
+            }
+            catch (Exception e)
+            {
+                log.Debug("Error polling metrics");
+                log.Debug(e);
+            }
         }
     }
 }

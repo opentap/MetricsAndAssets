@@ -8,7 +8,7 @@ namespace OpenTap.Metrics.Nats
         {
             var log = Log.CreateSource("Metrics");
             {
-                log.Info("Setup metrics endpoints");
+                log.Debug("Setup metrics endpoints");
                 try
                 {
                     new AssetDiscoveryEndpoint();

@@ -129,9 +129,9 @@ public static class MetricManager
         var isSupportedDoubleType = type == typeof(double) || type == typeof(double?);
         var isSupportedBoolType = type == typeof(bool) || type == typeof(bool?);
         var isSupportedIntType = type == typeof(int) || type == typeof(int?);
+        var isSupportedDateType = type == typeof(DateTime) || type == typeof(DateTime?);
 
-        return isSupportedDoubleType || isSupportedBoolType || isSupportedIntType || type == typeof(string) ||
-               td.DescendsTo(typeof(IConvertible));
+        return isSupportedDoubleType || isSupportedBoolType || isSupportedIntType || isSupportedDateType || type == typeof(string);
     }
 
     private static readonly ConcurrentDictionary<ITypeData, IMetricSource> _metricProducers =
@@ -155,6 +155,13 @@ public static class MetricManager
     {
         var metadata = GetMetadata(metric.Source);
         PushMetric(new StringMetric(metric, value, metadata));
+    }
+
+    /// <summary> Push a DateTime metric. (will be converted to a string in ISO 8601 format) </summary>
+    public static void PushMetric(MetricInfo metric, DateTime value)
+    {
+        var metadata = GetMetadata(metric.Source);
+        PushMetric(new StringMetric(metric, value.ToUniversalTime().ToString("o"), metadata)); // Convert DateTime to ISO 8601 compliant string
     }
 
     /// <summary>
@@ -191,7 +198,7 @@ public static class MetricManager
     {
         var interest = interestSet.Where(i => i.Kind.HasFlag(MetricKind.Poll)).ToHashSet();
         Dictionary<object, Dictionary<string, string>> metadataLookup = new();
-        
+
         foreach (var source in interest.GroupBy(i => i.Source))
         {
             if (source.Key is IOnPollMetricsCallback producer)
@@ -228,8 +235,8 @@ public static class MetricManager
                 case string v:
                     yield return new StringMetric(metric, v, metadata);
                     break;
-                case IConvertible v:
-                    yield return new StringMetric(metric, v.ToString(CultureInfo.InvariantCulture), metadata);
+                case DateTime v:
+                    yield return new StringMetric(metric, v.ToUniversalTime().ToString("o"), metadata);
                     break;
                 // String metrics does also support null values, but does not use the nullable flag.
                 case null when metric.Type.HasFlag(MetricType.Nullable) || metric.Type.HasFlag(MetricType.String):
@@ -293,7 +300,7 @@ public static class MetricManager
     {
         return CreateMetric<T>(owner, name, groupName, MetricKind.Push, null);
     }
-    
+
     private static Dictionary<string, string> GetMetadata(object source)
     {
         var result = new Dictionary<string, string>();
@@ -310,7 +317,7 @@ public static class MetricManager
         }
 
         return result;
-        
+
         MetaDataAttribute _getMetadataAttribute2(Type t, string member)
         {
             foreach (var @if in t.GetInterfaces())

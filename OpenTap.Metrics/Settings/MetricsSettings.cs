@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
@@ -45,7 +46,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     [Display("Kind", "The kind of this metric.", Order: 4), Browsable(true)]
-    public MetricKind Kind => Metric.Kind; 
+    public MetricKind Kind => Metric.Kind;
 
     [Browsable(false)]
     public int[] SuggestedPollRates => new int[] { 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400 }
@@ -75,7 +76,9 @@ public class MetricsSettingsItem : IMetricsSettingsItem
         var plural = v != 1;
         return plural ? $"Every {v} {unit}s" : $"Every {unit}";
     }
+
     [Browsable(false)] public bool CanPoll => Metric?.Kind.HasFlag(MetricKind.Poll) ?? false;
+
     string[] getSuggestedPollRateStrings()
     {
         if (!CanPoll)
@@ -95,8 +98,7 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 
     [Browsable(false)] public int PollRate => SuggestedPollRates[AvailablePollRateStrings.IndexOf(PollRateString)];
 
-    [Browsable(false)]
-    public string[] AvailablePollRateStrings { get; set; }
+    [Browsable(false)] public string[] AvailablePollRateStrings { get; set; }
 
     private string _pollRateString;
 
@@ -149,10 +151,11 @@ public class MetricsSettingsItem : IMetricsSettingsItem
             }
         }
 
-        return null; 
+        return null;
     }
 
     private MetricInfo _metric;
+
     [Browsable(false)]
     [XmlIgnore]
     public MetricInfo Metric
@@ -175,5 +178,4 @@ public class MetricsSettingsItem : IMetricsSettingsItem
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
 public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>
 {
-    
 }

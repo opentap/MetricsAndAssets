@@ -5,7 +5,7 @@ namespace OpenTap.Metrics.AssetDiscovery;
 [Display("Asset Discovery", "List of asset discovery implementations to use.")]
 public class AssetDiscoverySettings : ComponentSettingsList<AssetDiscoverySettings, IAssetDiscovery>
 {
-    public AssetDiscoverySettings()
+    public override void Initialize()
     {
         // By default, add all available asset discovery providers.
         // this will be overridden by the deserializer, if we have a saved configuration.

@@ -143,6 +143,6 @@ public interface IAsset
     /// A unique identifier for the asset. This is used to identify the asset in the system.
     /// E.g. for an Instrument, this could be a combination of Manufacturer, Model and serial number.
     /// </summary>
-    [MetaData(Name = "ID")]
+    [MetaData(Name = "AssetID")] // Don't change this name as it is used to associate metrics with the asset.
     string Identifier { get; }
 }

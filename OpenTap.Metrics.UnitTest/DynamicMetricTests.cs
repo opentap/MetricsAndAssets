@@ -78,7 +78,7 @@ public class DynamicMetricTests
         public object LastMetric { get; private set; }
         public void OnPushMetric(IMetric table)
         {
-            if (table.Info.MetricFullName is "Dynamic Metric Test / Pusher" or "Dynamic Nullable Metric Test / Pusher")
+            if (table.Info.MetricFullName is "Dynamic Metric Test \\ Pusher" or "Dynamic Nullable Metric Test \\ Pusher")
                 LastMetric = table.Value;
         }
     }

@@ -10,9 +10,11 @@ namespace OpenTap.Metrics;
 public enum MetricKind
 {
     /// <summary> This metric can be polled. </summary>
+    [Display("Poll", "This metric can be polled.")]
     Poll = 1,
     /// <summary> This metric can be pushed out of band. </summary>
+    [Display("Push", "This metric can be pushed.")]
     Push = 2,
     /// <summary> This metric can be polled and pushed out of band. </summary>
-    PushPoll = Push | Poll,
+    [Display("Push & Poll", "This metric can be pushed and polled.")]PushPoll = Push | Poll,
 }

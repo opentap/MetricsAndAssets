@@ -138,7 +138,7 @@ namespace OpenTap.Metrics.Nats
     public class NatsMetrics : IMetricSource, IOnPollMetricsCallback
     {
         private static readonly TraceSource log = Log.CreateSource("Metrics");
-        private readonly RunnerExtension runnerConnection;
+        private RunnerExtension _runnerConnection;
 
         [MetaData]
         public string StreamName => NatsMetricPusher.MetricsStreamName;
@@ -147,9 +147,16 @@ namespace OpenTap.Metrics.Nats
         [Metric("Storage Age [h]", "Metrics", DefaultPollRate = 15, DefaultEnabled = false)]
         public int MetricsStreamAge { get; set; }
 
-        public NatsMetrics()
+        private RunnerExtension runnerConnection
         {
-            runnerConnection = RunnerExtension.GetConnection();
+            get
+            {
+                if (_runnerConnection == null)
+                {
+                    _runnerConnection = RunnerExtension.GetConnection();
+                }
+                return _runnerConnection;
+            }
         }
 
         public void OnPollMetrics(IEnumerable<MetricInfo> metrics)

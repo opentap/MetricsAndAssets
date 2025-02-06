@@ -472,11 +472,11 @@ public class MetricManagerTest
             Assert.That(m.MetaData["Model"], Is.EqualTo("N9020"));
             if (m.Info.Source == mxa1)
             {
-                Assert.That(m.MetaData["ID"], Is.EqualTo($"{mxa1.Manufacturer}{mxa1.Model}{mxa1.SerialNumber}"));
+                Assert.That(m.MetaData["AssetID"], Is.EqualTo($"{mxa1.Manufacturer}{mxa1.Model}{mxa1.SerialNumber}"));
             }
             else
             {
-                Assert.That(m.MetaData["ID"], Is.EqualTo($"{mxa2.Manufacturer}{mxa2.Model}{mxa2.SerialNumber}"));
+                Assert.That(m.MetaData["AssetID"], Is.EqualTo($"{mxa2.Manufacturer}{mxa2.Model}{mxa2.SerialNumber}"));
             }
         }
     }

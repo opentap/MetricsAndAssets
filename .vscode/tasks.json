@@ -8,7 +8,7 @@
             "args": [
                 "build",
                 "-c",
-                "debug",
+                "Debug",
                 "${workspaceFolder}"
             ],
             "problemMatcher": "$msCompile",
@@ -23,6 +23,8 @@
             "type": "process",
             "args": [
                 "build",
+                "-c",
+                "Release",
                 "${workspaceFolder}"
             ],
             "problemMatcher": "$msCompile",

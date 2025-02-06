@@ -5,10 +5,15 @@ using Newtonsoft.Json;
 
 namespace OpenTap.Metrics.Nats
 {
+    /// <summary>
+    /// Helpers to facilitate plugins extending the runner API
+    /// </summary>
     public class RunnerExtension
     {
-        public IConnection Connection { get; }
-        public string RunnerId { get; }
+        private readonly IConnection connection;
+        private readonly string runnerId;
+        private readonly Guid? sessionId;
+        private readonly string baseSubject;
 
         private static RunnerExtension instance;
         internal static RunnerExtension Instance
@@ -17,49 +22,47 @@ namespace OpenTap.Metrics.Nats
             {
                 if (instance == null)
                 {
-                    instance = GetConnection();
+                    instance = new RunnerExtension();
                 }
                 return instance;
             }
         }
 
-        private RunnerExtension(IConnection connection, string runnerId)
-        {
-            Connection = connection;
-            RunnerId = runnerId;
-            BaseSubject = $"OpenTap.Runner.{runnerId}.Session.{GetSessionId()}";
-        }
-
-        public string BaseSubject { get; }
-        public static string DefaultServer = "nats://127.0.0.1:20111";
-
-        public static RunnerExtension GetConnection()
-        {
-            var options = ConnectionFactory.GetDefaultOptions();
-            options.Servers = new string[] { DefaultServer };
-            IConnection connection = new ConnectionFactory().CreateConnection(options);
-            return new RunnerExtension(connection, connection.ServerInfo.ServerName);
-        }
-
-        public static Guid GetSessionId()
+        private RunnerExtension()
         {
             var sessionIdVar = Environment.GetEnvironmentVariable("OPENTAP_RUNNER_SESSION_ID");
-            if (sessionIdVar == null)
+            if (string.IsNullOrEmpty(sessionIdVar))
             {
-                throw new Exception("OPENTAP_RUNNER_SESSION_ID environment variable not set");
+                // This is not a session, don't attempt to connect to NATS.
+                return;
             }
-            return Guid.Parse(sessionIdVar);
+            sessionId = Guid.Parse(sessionIdVar);
+
+            var options = ConnectionFactory.GetDefaultOptions();
+            options.Servers = new string[] { DefaultServer };
+            connection = new ConnectionFactory().CreateConnection(options);
+            runnerId = connection.ServerInfo.ServerName;
+            baseSubject = $"OpenTap.Runner.{runnerId}.Session.{sessionId}";
         }
+
+        public static string BaseSubject => Instance.baseSubject;
+        public static string DefaultServer = "nats://127.0.0.1:20111";
+        public static IConnection Connection => Instance.connection;
+        public static Guid? SessionId => Instance.sessionId;
 
         /// <summary>
         /// Used by plugins to add endpoints to the runner API
         /// </summary>
         public static void MapEndpoint<Tresponse>(string endpoint, Func<Tresponse> handler)
         {
-            Instance.Connection.SubscribeAsync($"{Instance.BaseSubject}.Request.{endpoint}", (sender, args) =>
+            if (Instance == null)
+            {
+                return;
+            }
+            Instance.connection.SubscribeAsync($"{Instance.baseSubject}.Request.{endpoint}", (sender, args) =>
             {
                 var response = handler();
-                Instance.Connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
+                Instance.connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
             });
         }
 
@@ -68,10 +71,14 @@ namespace OpenTap.Metrics.Nats
         /// </summary>
         public static void MapEndpoint<Trequest, Tresponse>(string endpoint, Func<Trequest, Tresponse> handler)
         {
-            Instance.Connection.SubscribeAsync($"{Instance.BaseSubject}.Request.{endpoint}", (sender, args) =>
+            if (Instance == null)
+            {
+                return;
+            }
+            Instance.connection.SubscribeAsync($"{Instance.baseSubject}.Request.{endpoint}", (sender, args) =>
             {
                 var response = handler(JsonConvert.DeserializeObject<Trequest>(Encoding.UTF8.GetString(args.Message.Data)));
-                Instance.Connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
+                Instance.connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
             });
         }
     }

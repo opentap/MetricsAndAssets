@@ -20,7 +20,6 @@ namespace OpenTap.Metrics.Nats
         private static readonly TraceSource log = Log.CreateSource("Metrics");
         private static readonly NatsMetricPusher instance = new NatsMetricPusher();
 
-        private RunnerExtension runnerConnection;
         private IJetStream _jetStream;
         private Timer timer;
 
@@ -89,15 +88,15 @@ namespace OpenTap.Metrics.Nats
         {
             var name = escapeSubject(metric.Info.Name);
             var group = escapeSubject(metric.Info.GroupName);
-            string subject = $"{runnerConnection.BaseSubject}.Metrics.{group}.{name}";
+            string subject = $"{RunnerExtension.BaseSubject}.Metrics.{group}.{name}";
             MetricDto dto = new MetricDto()
             {
-                Name = metric.Info.MetricFullName,
+                Name = metric.Info.MetricFullName + (metric.Info.Unit != null ? $" [{metric.Info.Unit}]" : ""),
                 Value = metric.Value,
                 Metadata = metric.MetaData
             };
 
-            if (!runnerConnection.Connection.IsClosed())
+            if (!RunnerExtension.Connection.IsClosed())
                 _jetStream.Publish(subject, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dto)));
             else
                 log.Warning("Connection is closed, not publishing metrics");
@@ -105,6 +104,11 @@ namespace OpenTap.Metrics.Nats
 
         private string escapeSubject(string subject)
         {
+            if (subject == "")
+            {
+                // an empty string is not a valid subject token
+                return "EMPTY";
+            }
             // https://docs.nats.io/nats-concepts/subjects#characters-allowed-and-recommended-for-subject-names
             return subject
                 .Replace(" ", "_")
@@ -115,58 +119,45 @@ namespace OpenTap.Metrics.Nats
 
         private void SetupMetricsStream()
         {
-            runnerConnection = RunnerExtension.GetConnection();
-
-            var jsManagementContext = runnerConnection.Connection.CreateJetStreamManagementContext();
+            var jsManagementContext = RunnerExtension.Connection.CreateJetStreamManagementContext();
             StreamConfiguration metricsStream = StreamConfiguration.Builder()
                 .WithName(MetricsStreamName)
                 .WithStorageType(StorageType.File)
                 .WithDiscardPolicy(DiscardPolicy.Old)
-                .WithSubjects($"{runnerConnection.BaseSubject}.Metrics.>")
+                .WithSubjects($"{RunnerExtension.BaseSubject}.Metrics.>")
                 .WithRetentionPolicy(RetentionPolicy.Limits)
-                .WithSubjectTransform(new SubjectTransform($"{runnerConnection.BaseSubject}.Metrics.>", "Metric.>"))
+                .WithSubjectTransform(new SubjectTransform($"{RunnerExtension.BaseSubject}.Metrics.>", "Metric.>"))
                 .WithAllowDirect(true)
                 .WithMaxAge(Duration.OfDays(2))
                 .Build();
             IList<string> streamNames = jsManagementContext.GetStreamNames();
             StreamInfo streamInfo = streamNames.Contains(metricsStream.Name) ? jsManagementContext.UpdateStream(metricsStream) : jsManagementContext.AddStream(metricsStream);
             log.Info($"Storage '{metricsStream.Name}' is configured. Currently has {streamInfo.State.Messages} messages");
-            _jetStream = runnerConnection.Connection.CreateJetStreamContext();
+            _jetStream = RunnerExtension.Connection.CreateJetStreamContext();
         }
     }
 
     public class NatsMetrics : IMetricSource, IOnPollMetricsCallback
     {
         private static readonly TraceSource log = Log.CreateSource("Metrics");
-        private RunnerExtension _runnerConnection;
 
         [MetaData]
         public string StreamName => NatsMetricPusher.MetricsStreamName;
-        [Metric("Storage Usage [MB]", "Metrics", DefaultPollRate = 15, DefaultEnabled = true)]
+        [Metric("Storage_Usage", "", DefaultPollRate = 15, DefaultEnabled = true)]
+        // [Unit("MB")]
         public double MetricsStreamSize { get; set; }
-        [Metric("Storage Age [h]", "Metrics", DefaultPollRate = 15, DefaultEnabled = false)]
+        [Metric("Storage_Age", "", DefaultPollRate = 15, DefaultEnabled = false)]
+        // [Unit("h")]
         public int MetricsStreamAge { get; set; }
-
-        private RunnerExtension runnerConnection
-        {
-            get
-            {
-                if (_runnerConnection == null)
-                {
-                    _runnerConnection = RunnerExtension.GetConnection();
-                }
-                return _runnerConnection;
-            }
-        }
 
         public void OnPollMetrics(IEnumerable<MetricInfo> metrics)
         {
             try
             {
-                var jsm = runnerConnection.Connection.CreateJetStreamManagementContext();
-                jsm.GetStreamInfo(StreamName);
-                MetricsStreamSize = jsm.GetStreamInfo(StreamName).State.Bytes / 1024 / 1024;
-                MetricsStreamAge = (DateTime.Now.ToUniversalTime() - jsm.GetStreamInfo(StreamName).State.FirstTime).Hours;
+                var jsm = RunnerExtension.Connection.CreateJetStreamManagementContext();
+                var info = jsm.GetStreamInfo(StreamName);
+                MetricsStreamSize = info.State.Bytes / 1024 / 1024;
+                MetricsStreamAge = (DateTime.Now.ToUniversalTime() - info.State.FirstTime).Hours;
             }
             catch (Exception e)
             {

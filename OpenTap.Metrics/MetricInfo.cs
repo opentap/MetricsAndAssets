@@ -15,7 +15,7 @@ internal class AbstractMetricInfo : MetricInfo
     public AbstractMetricInfo(IMemberData mem, string groupName, Type source) : base(mem, groupName, source)
     {
         Source = source;
-    } 
+    }
 }
 /// <summary> Information about a given metric, </summary>
 public class MetricInfo
@@ -55,7 +55,7 @@ public class MetricInfo
     public IEnumerable<object> Attributes { get; }
 
     /// <summary> Gets the full name of the metric. </summary>
-    public string MetricFullName => $"{GroupName} / {Name}";
+    public string MetricFullName => string.IsNullOrEmpty(GroupName) ? Name : $"{GroupName} \\ {Name}";
 
 
     /// <summary> Indicates if the metric is available. </summary>
@@ -66,6 +66,7 @@ public class MetricInfo
     /// This is a hint to the client. A UI is free to ignore this hint.
     /// </summary>
     public bool DefaultEnabled { get; protected set; } = false;
+    public string Unit => Attributes.OfType<UnitAttribute>().FirstOrDefault()?.Unit;
 
     /// <summary> Creates a new metric info based on a member name. </summary>
     /// <param name="mem">The metric member object.</param>

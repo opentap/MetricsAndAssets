@@ -168,19 +168,19 @@ public class MetricManagerTest
         InstrumentSettings.Current.Add(instrTest);
         var metrics = MetricManager.GetMetricInfos().ToArray();
 
-        var testMetric = metrics.FirstOrDefault(m => m.MetricFullName == "INST / Test");
+        var testMetric = metrics.FirstOrDefault(m => m.MetricFullName == "INST \\ Test");
         Assert.IsNotNull(testMetric);
         var range = testMetric.Attributes.OfType<RangeAttribute>().FirstOrDefault();
         Assert.IsNotNull(range);
         Assert.IsTrue(range.Minimum == 0.0);
 
-        Assert.IsTrue(metrics.Any(m => m.MetricFullName == "INST / v"));
+        Assert.IsTrue(metrics.Any(m => m.MetricFullName == "INST \\ v"));
 
-        Assert.Contains("Test Metric Producer / Y", metrics.Select(m => m.MetricFullName).ToArray());
+        Assert.Contains("Test Metric Producer \\ Y", metrics.Select(m => m.MetricFullName).ToArray());
         InstrumentSettings.Current.Remove(instrTest);
         metrics = MetricManager.GetMetricInfos().ToArray();
 
-        Assert.IsFalse(metrics.Any(m => m.MetricFullName == "INST / v"));
+        Assert.IsFalse(metrics.Any(m => m.MetricFullName == "INST \\ v"));
     }
 
     [Test]
@@ -190,13 +190,13 @@ public class MetricManagerTest
         var metricInfos = MetricManager.GetMetricInfos().Where(m => m.Source is FullMetricSource).ToArray();
 
         Assert.That(metricInfos, Has.Length.EqualTo(7));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / DoubleMetric"));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / DoubleMetricNull"));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / BoolMetric"));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / BoolMetricNull"));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / IntMetric"));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / IntMetricNull"));
-        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer / StringMetric"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ DoubleMetric"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ DoubleMetricNull"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ BoolMetric"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ BoolMetricNull"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ IntMetric"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ IntMetricNull"));
+        Assert.That(metricInfos, Has.One.Matches<MetricInfo>(m => m.MetricFullName == "Full Test Metric Producer \\ StringMetric"));
     }
 
     [Test]

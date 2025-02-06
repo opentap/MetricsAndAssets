@@ -8,6 +8,7 @@ namespace OpenTap.Metrics.AssetDiscovery;
 /// Plugin interface for asset discovery.
 /// Implementations of this interface can be used to discover assets such as instruments or DUTs connected to the system.
 /// </summary>
+[Display("Asset Discoverer", Description: "OpenTAP plugin that can discover assets.")]
 public interface IAssetDiscovery : OpenTap.ITapPlugin
 {
     /// <summary>

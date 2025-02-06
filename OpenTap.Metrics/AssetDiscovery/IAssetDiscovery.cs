@@ -46,6 +46,7 @@ public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
     /// Deriving classes should set this property in their constructor.
     /// </summary>
     [Display("Asset Discovery Name", "The name of the this asset discovery provider/implementation. ")]
+    [Browsable(false)]
     public string Name
     {
         get => _name;
@@ -63,6 +64,7 @@ public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
     /// Sets the priority of this provider. In case two implementations return the same
     /// discovered asset (same Identifier), the one from the higher priority provider is used
     /// </summary>
+    [Display("Priority", "In case two discoverers return the same property for the same asset, the value from the discoverer with the highest priority is used.")]
     public double Priority { get; set; } = 0;
 
     public abstract DiscoveryResult DiscoverAssets();

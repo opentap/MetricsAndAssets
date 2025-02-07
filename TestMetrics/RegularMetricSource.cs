@@ -2,7 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using OpenTap;
+using OpenTap.Cli;
 using OpenTap.Metrics;
 using OpenTap.Metrics.Settings;
 using OpenTap.Package;
@@ -30,7 +32,7 @@ public class RegularMetricSource : IMetricSource
 [Display("Instrument Metric Source")]
 public class InstrumentMetricSource : Instrument, IMetricSource
 {
-    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 27)]
+    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 27, DefaultEnabled = true)]
     public int PollMetric { get; set; }
     
     [Metric("Push Metric", kind: MetricKind.Push, DefaultPollRate = 120)]

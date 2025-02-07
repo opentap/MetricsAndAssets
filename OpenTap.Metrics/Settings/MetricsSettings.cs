@@ -24,7 +24,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     public string MetricGroup => Metric?.GroupName ?? "Unknown";
     [Browsable(true)]
     [Display("Name", "The name of this metric.", Order: 1.1)]
-    public string Name => Metric?.Name ?? "Unknwon";
+    public string Name => Metric?.Name ?? "Unknown";
 
     private string _selectedMetricString;
     [Display("Metric", "The full name of this metric.", Order: 1)]
@@ -105,7 +105,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
         return strings;
     }
 
-    [Browsable(false)] public int PollRate => SuggestedPollRates[AvailablePollRateStrings.IndexOf(PollRateString)];
+    [Browsable(false)] public int PollRate { get; private set; } 
 
     [Browsable(false)]
     [XmlIgnore]
@@ -121,9 +121,11 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
         get => _pollRateString;
         set
         {
-            if (!AvailablePollRateStrings.Contains(value))
+            var idx = AvailablePollRateStrings.IndexOf(value);
+            if (idx == -1)
                 return;
             _pollRateString = value;
+            PollRate = SuggestedPollRates[idx];
         }
     }
 

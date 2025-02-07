@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
@@ -24,30 +26,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     public string MetricGroup => Metric?.GroupName ?? "Unknown";
     [Browsable(true)]
     [Display("Name", "The name of this metric.", Order: 1.1)]
-    public string Name => Metric?.Name ?? "Unknown";
-
-    private string _selectedMetricString;
-    [Display("Metric", "The full name of this metric.", Order: 1)]
-    [Browsable(false)]
-    public string SelectedMetricString
-    {
-        get => _selectedMetricString;
-        set
-        {
-            if (_selectedMetricString == value) return;
-            _selectedMetricString = value;
-            Metric = MetricManager.GetMetricByName(value);
-            if (CanPoll)
-            {
-                var pollrate = Metric.DefaultPollRate == 0 ? 300 : Metric.DefaultPollRate;
-                PollRateString = AvailablePollRateStrings[SuggestedPollRates.IndexOf(pollrate)];
-            }
-            else
-            {
-                PollRateString = AvailablePollRateStrings[0];
-            }
-        }
-    }
+    public string Name => Metric?.Name ?? "Unknown"; 
 
     /// <summary> The type of this metric. </summary>
     [Browsable(true)]
@@ -60,7 +39,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
 
     [Browsable(false)]
     [XmlIgnore]
-    public List<int> SuggestedPollRates { get; private set; }
+    public List<int> AvailablePollRates { get; private set; }
 
     private string secondsToReadableString(int v)
     {
@@ -87,24 +66,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
         return plural ? $"Every {v} {unit}s" : $"Every {unit}";
     }
 
-    [Browsable(false)] public bool CanPoll => Metric?.Kind.HasFlag(MetricKind.Poll) ?? false;
-    string[] getPollRates()
-    {
-        if (!CanPoll)
-            return ["Disabled"];
-        var spr = SuggestedPollRates;
-        var strings = new string[spr.Count];
-        for (int i = 0; i < strings.Length; i++)
-        {
-            var pollrate = spr[i];
-            var readable = secondsToReadableString(pollrate);
-            if (Metric.DefaultPollRate == pollrate) readable += " (Default)";
-            strings[i] = readable;
-        }
-
-        return strings;
-    }
-
+    [Browsable(false)] public bool CanPoll { get; } 
     [Browsable(false)] public int PollRate { get; private set; } 
 
     [Browsable(false)]
@@ -125,58 +87,67 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
             if (idx == -1)
                 return;
             _pollRateString = value;
-            PollRate = SuggestedPollRates[idx];
+            PollRate = AvailablePollRates[idx];
         }
     }
 
-
-    private MetricInfo _metric;
 
     [Browsable(false)]
     [XmlIgnore]
-    public MetricInfo Metric
-    {
-        get => _metric;
-        private set
-        {
-            if (Equals(_metric, value)) return;
-            _metric = value;
-            List<int> defaultPollRates = [5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400];
-            if (_metric.DefaultPollRate != 0)
-            {
-                var insertAt = defaultPollRates.FindIndex(i => i > _metric.DefaultPollRate);
-                if (insertAt == -1) insertAt = defaultPollRates.Count;
-                defaultPollRates.Insert(insertAt, _metric.DefaultPollRate);
-            }
-            SuggestedPollRates = defaultPollRates;
-            AvailablePollRateStrings = getPollRates();
-        }
-    }
-
-    public MetricsSettingsItem()
-    {
-    }
+    public MetricInfo Metric { get; }
+    
+    /// <summary>
+    /// Only needed for serialization
+    /// </summary>
+    [Browsable(false)]
+    public string MetricFullName { get; set; }
 
     public MetricsSettingsItem(MetricInfo metric)
     {
-        SelectedMetricString = metric.MetricFullName;
-    }
+        Metric = metric;
+        MetricFullName = metric.MetricFullName;
+        CanPoll = metric.Kind.HasFlag(MetricKind.Poll);
 
-    protected override string GetError(string propertyName = null)
-    {
-        if (propertyName == nameof(SelectedMetricString))
+        if (CanPoll)
         {
-            if (MetricsSettings.Current.Any(m => !ReferenceEquals(this, m) && m.Metric?.MetricFullName == Metric?.MetricFullName))
-                return "Metric has duplicate entries.";
+            List<int> defaultPollRates = [5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400];
+
+            if (metric.DefaultPollRate != 0)
+            {
+                var insertAt = defaultPollRates.FindIndex(i => i > metric.DefaultPollRate);
+                if (insertAt == -1) insertAt = defaultPollRates.Count;
+                defaultPollRates.Insert(insertAt, metric.DefaultPollRate);
+            }
+
+            AvailablePollRates = defaultPollRates;
+            AvailablePollRateStrings = getPollRateStrings(defaultPollRates);
+            var pollRate = Metric.DefaultPollRate == 0 ? 300 : Metric.DefaultPollRate;
+            PollRateString = AvailablePollRateStrings[AvailablePollRates.IndexOf(pollRate)];
+        }
+        else
+        {
+            AvailablePollRateStrings = ["Disabled"];
+            PollRateString = AvailablePollRateStrings[0];
+        }
+    } 
+    string[] getPollRateStrings(List<int> pollRates)
+    {
+        var strings = new string[pollRates.Count];
+        for (int i = 0; i < strings.Length; i++)
+        {
+            var pollRate = pollRates[i];
+            var readable = secondsToReadableString(pollRate);
+            if (Metric.DefaultPollRate == pollRate) readable += " (Default)";
+            strings[i] = readable;
         }
 
-        return null;
+        return strings;
     }
 }
 
 [ComponentSettingsLayout(ComponentSettingsLayoutAttribute.DisplayMode.DataGrid)]
 [Display("Metrics", "List of enabled metrics that should be monitored.")]
-public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>
+public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSettingsItem>, IDeserializedCallback
 {
     public override void Initialize()
     {
@@ -187,5 +158,36 @@ public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSe
         {
             Add(new MetricsSettingsItem(defaultMetric));
         }
+    }
+
+    void AddRange(IEnumerable<IMetricsSettingsItem> metrics)
+    {
+        foreach (var m in metrics)
+        {
+            Add(m);
+        }
+    }
+    int RemoveWhere(Predicate<IMetricsSettingsItem> match)
+    {
+        var indices = new List<int>();
+        for (int i = 0; i < this.Count; i++)
+        {
+            if (match(this[i]))
+                indices.Add(i);
+        }
+
+        indices.Reverse();
+        foreach (var idx in indices)
+        {
+            this.RemoveAt(idx);
+        }
+
+        return indices.Count;
+    }
+
+    public void OnDeserialized()
+    {
+        // This is possible when elements are not correctly deserialized, e.g. when 
+        RemoveWhere(x => x == null);
     }
 }

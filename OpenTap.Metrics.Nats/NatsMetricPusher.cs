@@ -57,10 +57,10 @@ namespace OpenTap.Metrics.Nats
                 if (MetricsSettings.Current.Any())
                 {
                     long seconds = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-                    var pollMetrics = MetricsSettings.Current.Where(s => seconds % s.Metric.DefaultPollRate == 0).Select(p => p.Metric).ToList();
+                    var pollMetrics = MetricsSettings.Current.Where(s => seconds % s.PollRate == 0).Select(p => p.Metric).ToList();
                     if (pollMetrics.Any())
                     {
-                        log.Debug($"Polling {pollMetrics.Count} metrics");
+                        log.Debug($"Polling {pollMetrics.Count} metrics.");
                         var polledMetrics = MetricManager.PollMetrics(pollMetrics);
                         foreach (var metric in polledMetrics)
                         {
@@ -69,17 +69,17 @@ namespace OpenTap.Metrics.Nats
                     }
                     else
                     {
-                        log.Debug("No metrics needs to be polled");
+                        log.Debug("No metrics need to be polled.");
                     }
                 }
                 else
                 {
-                    log.Debug("No metrics to enabled");
+                    log.Debug("No metrics enabled.");
                 }
             }
             catch (Exception ex)
             {
-                log.Error("Error polling metrics");
+                log.Error($"Error polling metrics: '{ex.Message}'");
                 log.Debug(ex);
             }
         }

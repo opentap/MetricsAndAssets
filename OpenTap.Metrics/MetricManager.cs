@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
@@ -109,7 +108,8 @@ public static class MetricManager
             }
         }
 
-        foreach (var metricSource in producers.Concat(InstrumentSettings.Current).Concat(DutSettings.Current))
+        var sources = producers.Concat(InstrumentSettings.Current).Concat(DutSettings.Current);
+        foreach (var metricSource in sources)
         {
 
             var type1 = TypeData.GetTypeData(metricSource);
@@ -376,9 +376,9 @@ public static class MetricManager
         _pushMetricInfos[metricInfo.Member] = metricInfo;
     }
 
-    private static readonly ConcurrentDictionary<string, MetricInfo> metricNameLookup = new();
     internal static MetricInfo GetMetricByName(string value)
     {
-        return metricNameLookup.GetOrAdd(value, _ => GetMetricInfos().FirstOrDefault(m => m.MetricFullName == value));
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        return GetMetricInfos().FirstOrDefault(m => m.MetricFullName == value);
     }
 }

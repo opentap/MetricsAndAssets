@@ -57,3 +57,48 @@ public class AfterCreateAction : ICustomPackageAction
 
     public PackageActionStage ActionStage => PackageActionStage.Create;
 }
+
+public class TestAddRemoveResourcesCliAction : ICliAction
+{
+    private static readonly TraceSource log = Log.CreateSource("Test Metrics");
+    public int Execute(CancellationToken cancellationToken)
+    {
+        var src1 = new InstrumentMetricSource();
+        var src2 = new InstrumentMetricSource();
+        using var s = Session.Create(SessionOptions.OverlayComponentSettings);
+        MetricsSettings.Current.Clear();
+        MetricsSettings.Current.Initialize();
+
+        {
+            log.Info("Cleared");
+            log.Info($"{MetricsSettings.Current.Count} metrics");
+        }
+        {
+            log.Info("Add src1");
+            InstrumentSettings.Current.Add(src1);
+            log.Info($"{MetricsSettings.Current.Count} metrics");
+        }
+        {
+            log.Info("Add src2");
+            InstrumentSettings.Current.Add(src2);
+            log.Info($"{MetricsSettings.Current.Count} metrics");
+        }
+        MetricsSettings.Current.Add(new MetricsSettingsItem(MetricManager.GetMetricInfos()
+            .FirstOrDefault(i => i.DefaultEnabled && i.Source == src1)));
+        using (var s2 = Session.Create(SessionOptions.OverlayComponentSettings))
+        {
+            {
+                log.Info("Remove src1");
+                InstrumentSettings.Current.RemoveAt(0);
+                log.Info($"{MetricsSettings.Current.Count} metrics");
+            }
+            {
+                log.Info("Remove src2");
+                InstrumentSettings.Current.RemoveAt(0);
+                log.Info($"{MetricsSettings.Current.Count} metrics");
+            }
+        }
+
+        return 0;
+    }
+}

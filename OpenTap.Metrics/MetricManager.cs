@@ -321,6 +321,13 @@ public static class MetricManager
     {
         return CreateMetric<T>(owner, name, groupName, MetricKind.Push, null);
     }
+    
+    public static MetricInfo CreatePushPollMetric<T>(IAdditionalMetricSources owner, Func<T> pollFunction, string name, string groupName)
+    {
+        if (pollFunction == null)
+            throw new ArgumentNullException(nameof(pollFunction));
+        return CreateMetric<T>(owner, name, groupName, MetricKind.PushPoll, pollFunction);
+    }
 
     private static Dictionary<string, string> GetMetadata(object source)
     {

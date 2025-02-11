@@ -46,7 +46,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
                     uniqueMetrics.Add(d);
                 }
 
-                metricDescriptors = uniqueMetrics.ToArray();
+                metricSpecifiers = uniqueMetrics.ToArray();
                 CacheInvalidated?.Invoke(this, new());
             }
             finally
@@ -56,9 +56,9 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
         });
     }
 
-    private MetricSpecifier[] metricDescriptors = [];
+    private MetricSpecifier[] metricSpecifiers = [];
 
-    public IEnumerable<ITypeData> Types => metricDescriptors.Select(MetricInfoTypeData.FromMetricDiscriminant);
+    public IEnumerable<ITypeData> Types => metricSpecifiers.Select(MetricInfoTypeData.FromMetricSpecifier);
 
     public event EventHandler<TypeDataCacheInvalidatedEventArgs> CacheInvalidated;
 }
@@ -69,7 +69,7 @@ class MetricInfoTypeData : ITypeData
     public const string MetricTypePrefix = "Metric:";
     public readonly MetricSpecifier Specifier;
     private static readonly ConcurrentDictionary<MetricSpecifier, MetricInfoTypeData> _cache = [];
-    public static MetricInfoTypeData FromMetricDiscriminant(MetricSpecifier disc)
+    public static MetricInfoTypeData FromMetricSpecifier(MetricSpecifier disc)
     {
         return _cache.GetOrAdd(disc, _ => new MetricInfoTypeData(disc));
     } 

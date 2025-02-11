@@ -31,7 +31,7 @@ public class MetricInfo
     /// <summary> The type of this metric. </summary>
     [Browsable(true)]
     [Display("Type", Description: "The type of this metric.", Order: 3)]
-    public MetricType Type => GetMetricType(Member);
+    public MetricType Type => GetMemberMetricType(Member);
 
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     [Display("Kind", "The kind of this metric.", Order: 4), Browsable(true)]
@@ -168,7 +168,7 @@ public class MetricInfo
     /// <summary>
     /// Gets the metric type for all supported types including nullable.
     /// </summary>
-    private MetricType GetMetricType(IMemberData memberData)
+    internal static MetricType GetMemberMetricType(IMemberData memberData)
     {
         if (memberData == null) return MetricType.Unknown;
         return memberData.TypeDescriptor switch

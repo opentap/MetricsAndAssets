@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Timers;
 using NATS.Client.Internals;
 using NATS.Client.JetStream;
 using Newtonsoft.Json;
 using OpenTap.Metrics.Settings;
-using OpenTap.Runner.Client;
 
 namespace OpenTap.Metrics.Nats
 {
@@ -57,7 +54,7 @@ namespace OpenTap.Metrics.Nats
                 if (MetricsSettings.Current.Any())
                 {
                     long seconds = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-                    var pollMetrics = MetricsSettings.Current.Where(s => seconds % s.PollRate == 0).Select(p => p.Metric).ToList();
+                    var pollMetrics = MetricsSettings.Current.Where(s => seconds % s.PollRate == 0).SelectMany(p => p.Metrics).ToList();
                     if (pollMetrics.Any())
                     {
                         log.Debug($"Polling {pollMetrics.Count} metrics.");

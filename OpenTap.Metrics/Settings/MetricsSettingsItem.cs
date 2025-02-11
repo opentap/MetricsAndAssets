@@ -68,7 +68,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     #region Serialized Settings
     [Browsable(false)] 
     [DeserializeOrder(1)]
-    public int PollRate { get; private set; } 
+    public int PollRate { get; set; } 
     
     [Browsable(false)]
     [DeserializeOrder(2)]

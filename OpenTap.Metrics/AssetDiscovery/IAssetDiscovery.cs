@@ -132,7 +132,6 @@ public interface IAsset
     /// The manufacturer of the asset. E.g. "Keysight". 
     /// Should map to the first part of the *IDN? SCPI query, or the Vendor ID in a USB descriptor.
     /// </summary>
-    [MetaData(Name = "Manufacturer")]
     public string Manufacturer { get; }
 
     /// <summary>
@@ -140,7 +139,6 @@ public interface IAsset
     /// This can be used to determine a suitable driver for the asset
     /// so it can be used as an Asset in OpenTAP.
     /// </summary>
-    [MetaData(Name = "Model")]
     public string Model { get; }
     /// <summary>
     /// A unique identifier for the asset. This is used to identify the asset in the system.

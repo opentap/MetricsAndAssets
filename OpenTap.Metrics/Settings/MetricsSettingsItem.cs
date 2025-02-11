@@ -129,7 +129,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
 
     [Display("Current Sources", "The sources that currently provide this metric.", Order: 6)]
     [Browsable(true)]
-    public string CurrentSources => string.Join(", ", Metrics.Select(x => x.GroupName));
+    public string CurrentSources => string.Join(", ", Metrics.Select(x => x.GroupName ?? x.Member.DeclaringType.Name));
     #endregion
 
     public IEnumerable<MetricInfo> Metrics => MetricManager.GetMetricInfos().Where(Specifier.Matches); 

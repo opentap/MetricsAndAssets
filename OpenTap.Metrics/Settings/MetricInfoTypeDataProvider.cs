@@ -19,8 +19,6 @@ public class MetricInfoTypeDataProvider : ITypeDataProvider
 
     public ITypeData GetTypeData(object obj)
     {
-        if (obj is MetricsSettingsItem m)
-            return MetricInfoTypeData.FromMetricSpecifier(m.Specifier);
         return null;
     }
 

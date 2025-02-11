@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace OpenTap.Metrics.Settings;
 
-public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
+public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITypeDataSourceProvider
 {
     private long updateStarted = 0;
     public void Search()
@@ -23,14 +23,8 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
             try
             {
                 HashSet<MetricSpecifier> uniqueMetrics = [];
-                var groups = TypeData.GetDerivedTypes<IMetricSource>().SelectMany(src => src.GetMembers())
-                    .Where(mem => mem.HasAttribute<MetricAttribute>())
-                    .GroupBy(x =>
-                    {
-                        var attr = x.GetAttribute<MetricAttribute>();
-                        var grp = string.IsNullOrWhiteSpace(attr.Group) ? null : attr.Group;
-                        return (Group: grp, Name: attr.Name, Type: MetricInfo.GetMemberMetricType(x));
-                    });
+                var groups = TypeData.GetDerivedTypes<IMetricSource>().SelectMany(src => src.GetMetricMembers())
+                    .GroupBy(x => new MetricSpecifier(x));
                 foreach (var grp in groups)
                 {
                     MetricSpecifier d = new MetricSpecifier(grp.Key.Name, grp.Key.Group, grp.Key.Type);
@@ -59,6 +53,12 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated
     private MetricSpecifier[] metricSpecifiers = [];
 
     public IEnumerable<ITypeData> Types => metricSpecifiers.Select(MetricInfoTypeData.FromMetricSpecifier);
+    public ITypeDataSource GetSource(ITypeData typeData)
+    {
+        if (MetricInfoTypeDataSource.TryFromTypeData(typeData, out var src))
+            return src;
+        return null;
+    }
 
     public event EventHandler<TypeDataCacheInvalidatedEventArgs> CacheInvalidated;
 }

@@ -54,28 +54,6 @@ public static class MetricManager
     /// <summary> Returns true if a metric has interest. </summary>
     public static bool HasInterest(MetricInfo metric) => _interestLookup.Values.Any(x => x.Contains(metric));
 
-    internal static IEnumerable<AbstractMetricInfo> GetAbstractMetricInfos()
-    {
-        var types = TypeData.GetDerivedTypes<IMetricSource>().Where(x => x.DescendsTo(typeof(IResource)));
-        foreach (var type1 in types)
-        {
-            var td = type1.AsTypeData();
-            if (td == null) continue;
-            var group = td.GetDisplayAttribute().GetFullName();
-            var memberGrp = td.GetMembers()
-                .Where(m => m.HasAttribute<MetricAttribute>() && TypeIsSupported(m.TypeDescriptor))
-                .ToLookup(t => t.GetAttribute<MetricAttribute>()?.Group ?? group);
-
-            foreach (var member in memberGrp)
-            {
-                foreach (var mem in member)
-                {
-                    yield return new AbstractMetricInfo(mem, member.Key, td.Type);
-                }
-            }
-        } 
-    }
-
     /// <summary> Get information about the metrics available to query. </summary>
     /// <returns></returns>
     public static IEnumerable<MetricInfo> GetMetricInfos()
@@ -154,8 +132,7 @@ public static class MetricManager
         return isSupportedDoubleType || isSupportedBoolType || isSupportedIntType || isSupportedDateType || type == typeof(string);
     }
 
-    private static readonly ConcurrentDictionary<ITypeData, IMetricSource> _metricProducers =
-        new ConcurrentDictionary<ITypeData, IMetricSource>();
+    private static readonly ConcurrentDictionary<ITypeData, IMetricSource> _metricProducers = new();
 
     /// <summary> Push a double metric. </summary>
     public static void PushMetric(MetricInfo metric, double value)

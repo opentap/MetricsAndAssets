@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -125,7 +126,7 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
             _pollRateString = value;
             PollRate = AvailablePollRates[idx];
         }
-    }
+    } 
 
     [Display("Current Sources", "The sources that currently provide this metric.", Order: 6)]
     [Browsable(true)]
@@ -148,6 +149,25 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
         {
             if (MetricsSettings.Current.Any(m => !ReferenceEquals(this, m) && (m as MetricsSettingsItem)?.Specifier.Equals(Specifier) == true))
                 return "Metric has duplicate entries.";
+        }
+        else if (propertyName == nameof(CurrentSources))
+        {
+            try
+            {
+                var sources = CurrentSources;
+                if (string.IsNullOrWhiteSpace(sources))
+                {
+                    var availableFrom = TypeData.GetDerivedTypes<IMetricSource>()
+                        .Where(m => m.GetMetricSpecifiers().Contains(Specifier))
+                        .Select(td => td.GetDisplayAttribute().GetFullName());
+                    var str = string.Join("\n", availableFrom);
+                    return $"No sources configured. This metric is available from the following instruments:\n{str}";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Error getting sources: '{ex.Message}'.";
+            }
         }
 
         return null;

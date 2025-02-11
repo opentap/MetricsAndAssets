@@ -126,11 +126,18 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
             _pollRateString = value;
             PollRate = AvailablePollRates[idx];
         }
-    } 
+    }
 
+    private string MetricSourceName(MetricInfo m)
+    {
+        string str = (m.Source as IResource)?.Name;
+        if (string.IsNullOrWhiteSpace(str))
+            str = m.Member.DeclaringType.GetDisplayAttribute().GetFullName();
+        return str;
+    }
     [Display("Current Sources", "The sources that currently provide this metric.", Order: 6)]
     [Browsable(true)]
-    public string CurrentSources => string.Join(", ", Metrics.Select(x => x.GroupName ?? x.Member.DeclaringType.Name));
+    public string CurrentSources => string.Join(", ", Metrics.Select(MetricSourceName));
     #endregion
 
     public IEnumerable<MetricInfo> Metrics => MetricManager.GetMetricInfos().Where(Specifier.Matches); 

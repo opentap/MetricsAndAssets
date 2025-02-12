@@ -10,6 +10,20 @@ using OpenTap.Metrics.Settings;
 
 namespace OpenTap.Metrics.Nats
 {
+    public static class Linq2
+    {
+        public static IEnumerable<T> DistinctBy<T, T2>(this IEnumerable<T> source, Func<T, T2> selector)
+            where T2 : IEquatable<T2>
+        {
+            HashSet<T2> occurrences = new HashSet<T2>();
+            foreach (var s in source)
+            {
+                if (occurrences.Add(selector(s)))
+                    yield return s;
+            }
+        }
+    }
+    
     public class NatsMetricPusher
     {
         internal const string MetricsStreamName = "Metric";
@@ -55,7 +69,9 @@ namespace OpenTap.Metrics.Nats
                 {
                     long seconds = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
                     var pollMetrics = MetricsSettings.Current
+                        .OfType<MetricsSettingsItem>()
                         .Where(s => s.IsEnabled && seconds % s.PollRate == 0)
+                        .DistinctBy(x => x.Specifier)
                         .SelectMany(p => p.Metrics)
                         .Where(m => m.Kind.HasFlag(MetricKind.Poll)).ToList();
                     if (pollMetrics.Any())

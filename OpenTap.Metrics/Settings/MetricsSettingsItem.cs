@@ -170,9 +170,19 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
                 {
                     var availableFrom = TypeData.GetDerivedTypes<IMetricSource>()
                         .Where(m => m.GetMetricSpecifiers().Contains(Specifier))
-                        .Select(td => td.GetDisplayAttribute().GetFullName());
-                    var str = string.Join("\n", availableFrom);
-                    return $"No sources configured. This metric is available from the following instruments:\n{str}";
+                        .Where(td => td.DescendsTo(typeof(IResource)))
+                        .Select(td => td.GetDisplayAttribute().GetFullName())
+                        .ToArray();
+                    if (availableFrom.Any())
+                    {
+                        var str = string.Join("\n", availableFrom);
+                        return
+                            $"No sources configured. This metric is available from the following resources:\n{str}";
+                    }
+                    else
+                    {
+                        return "No installed plugins provide this metric.";
+                    }
                 }
             }
             catch (Exception ex)

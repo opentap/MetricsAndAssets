@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 
 namespace OpenTap.Metrics.Settings;
 
+[Display("Metric", "The configuration for a specific metric.")]
 public interface IMetricsSettingsItem : ITapPlugin
 {
     IEnumerable<MetricInfo> Metrics { get; }

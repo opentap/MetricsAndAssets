@@ -15,7 +15,7 @@ public class RegularMetricSource : IMetricSource
     [Metric("Grouped Metric", "Metric Group", kind: MetricKind.Poll, DefaultPollRate = 27)]
     public int GroupedPollMetric { get; set; }
     
-    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 27)]
+    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 25)]
     public int PollMetric { get; set; }
     
     [Metric("Push Metric", kind: MetricKind.Push, DefaultPollRate = 120)]
@@ -42,7 +42,7 @@ public class InstrumentMetricSource2 : Instrument, IMetricSource
 [Display("Instrument Metric Source")]
 public class InstrumentMetricSource : Instrument, IMetricSource
 {
-    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 27)]
+    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 28)]
     public int PollMetric { get; set; }
     
     [Metric("Push Metric", kind: MetricKind.Push, DefaultPollRate = 120)]

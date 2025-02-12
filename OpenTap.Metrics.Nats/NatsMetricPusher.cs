@@ -83,10 +83,6 @@ namespace OpenTap.Metrics.Nats
                             StoreMetricOnJetStream(metric);
                         }
                     }
-                    else
-                    {
-                        log.Debug("No metrics need to be polled.");
-                    }
                 }
                 else
                 {
@@ -159,10 +155,10 @@ namespace OpenTap.Metrics.Nats
 
         [MetaData]
         public string StreamName => NatsMetricPusher.MetricsStreamName;
-        [Metric("Storage_Usage", "", DefaultPollRate = 15, DefaultEnabled = true)]
+        [Metric("Usage (MB)", "Runner Metric Storage", DefaultPollRate = 15, DefaultEnabled = true)]
         // [Unit("MB")]
         public double MetricsStreamSize { get; set; }
-        [Metric("Storage_Age", "", DefaultPollRate = 15, DefaultEnabled = false)]
+        [Metric("Age (Hours)", "Runner Metric Storage", DefaultPollRate = 15, DefaultEnabled = false)]
         // [Unit("h")]
         public int MetricsStreamAge { get; set; }
 

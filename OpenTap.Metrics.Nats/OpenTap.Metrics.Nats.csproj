@@ -5,6 +5,14 @@
         <DEBUG_OPENTAP_NATS>false</DEBUG_OPENTAP_NATS>
     </PropertyGroup>
 
+    <!-- Automatic assembly versioning in pipeline-->
+    <PropertyGroup Condition="'$(ShortVersion)' != ''">
+        <Version>$(ShortVersion)</Version>
+        <AssemblyVersion>$(ShortVersion)</AssemblyVersion>
+        <InformationalVersion>$(GitVersion)</InformationalVersion>
+        <FileVersion>$(ShortVersion).0</FileVersion>
+    </PropertyGroup>
+    
     <ItemGroup>
         <ProjectReference Include="..\OpenTap.Metrics\OpenTap.Metrics.csproj"/>
         <PackageReference Include="NATS.Client" Version="1.1.6"/>

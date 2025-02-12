@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace OpenTap.Metrics.Nats
 {
     public class EnableMetricsPollingEndpoint
@@ -10,13 +12,16 @@ namespace OpenTap.Metrics.Nats
 
         private EnableMetricsPollingResponse SetupMetricsPolling(EnableMetricsPollingRequest request)
         {
+            var pusher = MetricSinkSettings.Current.OfType<NatsMetricPusher>().FirstOrDefault();
             if (request.Enabled)
             {
-                NatsMetricPusher.Start();
+                if (pusher == null)
+                    MetricSinkSettings.Current.Add(new NatsMetricPusher());
             }
             else
             {
-                NatsMetricPusher.Stop();
+                if (pusher != null)
+                    MetricSinkSettings.Current.Remove(pusher);
             }
 
             return new EnableMetricsPollingResponse

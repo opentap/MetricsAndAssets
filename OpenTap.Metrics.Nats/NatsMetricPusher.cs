@@ -54,7 +54,10 @@ namespace OpenTap.Metrics.Nats
                 if (MetricsSettings.Current.Any())
                 {
                     long seconds = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-                    var pollMetrics = MetricsSettings.Current.Where(s => seconds % s.PollRate == 0).SelectMany(p => p.Metrics).ToList();
+                    var pollMetrics = MetricsSettings.Current
+                        .Where(s => s.IsEnabled && seconds % s.PollRate == 0)
+                        .SelectMany(p => p.Metrics)
+                        .Where(m => m.Kind.HasFlag(MetricKind.Poll)).ToList();
                     if (pollMetrics.Any())
                     {
                         log.Debug($"Polling {pollMetrics.Count} metrics.");
@@ -153,7 +156,7 @@ namespace OpenTap.Metrics.Nats
             {
                 var jsm = RunnerExtension.Connection.CreateJetStreamManagementContext();
                 var info = jsm.GetStreamInfo(StreamName);
-                MetricsStreamSize = info.State.Bytes / 1024 / 1024;
+                MetricsStreamSize = (double)info.State.Bytes / (1024 * 1024);
                 MetricsStreamAge = (DateTime.Now.ToUniversalTime() - info.State.FirstTime).Hours;
             }
             catch (Exception e)

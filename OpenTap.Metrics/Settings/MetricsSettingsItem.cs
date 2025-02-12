@@ -10,6 +10,7 @@ public interface IMetricsSettingsItem : ITapPlugin
 {
     IEnumerable<MetricInfo> Metrics { get; }
     int PollRate { get; }
+    bool IsEnabled { get; }
 }
 
 [Display("Metric", "The configuration for a specific metric.")]
@@ -83,8 +84,10 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
         }
     } 
     #endregion
-    #region Displayed Settings
+    #region Displayed Settings 
     [Browsable(false)] public bool CanPoll => Specifier.Kind.HasFlag(MetricKind.Poll); 
+    [Display("Enabled", "Whether or not this metric should be polled.", Order: 0.9)]
+    public bool IsEnabled { get; set; } = true;
     [Browsable(true)]
     [Display("Group", "The group of this metric.", Order: 1.0)]
     public string MetricGroup => Specifier.Group;

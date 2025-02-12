@@ -8,7 +8,7 @@ namespace OpenTap.Metrics.AssetDiscovery
     /// Base class for instruments that have asset metrics (like calibration due date) that can be polled.
     /// Contains logic to ensure that SCPI queries are not sent to the instrument from multiple threads/processes at the same time.
     /// </summary>
-    public abstract class AssetMetricScpiInstrument : ScpiInstrument, IAsset, IOnPollMetricsCallback, IDisposable
+    public abstract class AssetMetricScpiInstrument : ScpiInstrument, IAsset, IMetricSource, IOnPollMetricsCallback, IDisposable
     {
         #region Settings
         // Metadata used to associate any metrics defined by this class to an asset with the same identifier returned by the IAssetDiscovery implementation

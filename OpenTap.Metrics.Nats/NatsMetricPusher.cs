@@ -24,7 +24,7 @@ namespace OpenTap.Metrics.Nats
         }
     }
     
-    public class NatsMetricPusher
+    public class NatsMetricPusher : IMetricListener
     {
         internal const string MetricsStreamName = "Metric";
 
@@ -46,7 +46,8 @@ namespace OpenTap.Metrics.Nats
                 };
                 instance.timer.Elapsed += instance.PollMetrics;
                 instance.timer.Start();
-                log.Info("Metrics polling started.");
+                log.Info("Metrics polling started."); 
+                instance.UpdateSubscribeSet();
             }
             catch (Exception e)
             {
@@ -61,8 +62,26 @@ namespace OpenTap.Metrics.Nats
             log.Info("Metrics polling stopped.");
         }
 
+        private void UpdateSubscribeSet()
+        { 
+            var interestSet = MetricsSettings.Current.OfType<MetricsSettingsItem>()
+                .Where(x => x.Kind.HasFlag(MetricKind.Push))
+                .SelectMany(x => x.Metrics)
+                .Where(x => x.Kind.HasFlag(MetricKind.Push)).ToArray();
+            MetricManager.Subscribe(this, interestSet);
+        }
+        
         private void PollMetrics(object sender, ElapsedEventArgs e)
         {
+            try
+            {
+                UpdateSubscribeSet();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Error updating subscribe set: '{ex.Message}'");
+                log.Debug(ex);
+            }
             try
             {
                 if (MetricsSettings.Current.Any())
@@ -146,6 +165,11 @@ namespace OpenTap.Metrics.Nats
             StreamInfo streamInfo = streamNames.Contains(metricsStream.Name) ? jsManagementContext.UpdateStream(metricsStream) : jsManagementContext.AddStream(metricsStream);
             log.Info($"Storage '{metricsStream.Name}' is configured. Currently has {streamInfo.State.Messages} messages");
             _jetStream = RunnerExtension.Connection.CreateJetStreamContext();
+        }
+
+        public void OnPushMetric(IMetric table)
+        {
+            StoreMetricOnJetStream(table);
         }
     }
 

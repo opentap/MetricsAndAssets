@@ -12,6 +12,9 @@ namespace TestMetrics;
 [Display("Regular Metric Source")]
 public class RegularMetricSource : IMetricSource
 {
+    [Metric("Grouped Metric", "Metric Group", kind: MetricKind.Poll, DefaultPollRate = 27)]
+    public int GroupedPollMetric { get; set; }
+    
     [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 27)]
     public int PollMetric { get; set; }
     
@@ -25,6 +28,15 @@ public class RegularMetricSource : IMetricSource
     public int QuickMetric { get; set; }
     [Metric("Slow Metric", kind: MetricKind.Poll, DefaultPollRate = 86400*100)]
     public int SlowMetric { get; set; }
+    [Metric("Default Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 600, DefaultEnabled = true)]
+    public int DefaultPollMetric { get; set; }
+}
+
+[Display("Instrument Metric Source 2")]
+public class InstrumentMetricSource2 : Instrument, IMetricSource
+{
+    [Metric("New Unique Metric", DefaultEnabled = true ) ]
+    public int SomeMetric { get; set; }
 }
 
 [Display("Instrument Metric Source")]

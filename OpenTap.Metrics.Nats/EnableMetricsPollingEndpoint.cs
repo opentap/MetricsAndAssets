@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
-using OpenTap.Metrics.AssetDiscovery;
-
 namespace OpenTap.Metrics.Nats
 {
     public class EnableMetricsPollingEndpoint

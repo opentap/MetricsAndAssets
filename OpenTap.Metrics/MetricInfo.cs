@@ -9,14 +9,6 @@ using System.Linq;
 
 namespace OpenTap.Metrics;
 
-internal class AbstractMetricInfo : MetricInfo
-{
-    public new Type Source { get; }
-    public AbstractMetricInfo(IMemberData mem, string groupName, Type source) : base(mem, groupName, source)
-    {
-        Source = source;
-    }
-}
 /// <summary> Information about a given metric, </summary>
 public class MetricInfo
 {
@@ -31,7 +23,7 @@ public class MetricInfo
     /// <summary> The type of this metric. </summary>
     [Browsable(true)]
     [Display("Type", Description: "The type of this metric.", Order: 3)]
-    public MetricType Type => GetMetricType(Member);
+    public MetricType Type => GetMemberMetricType(Member);
 
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     [Display("Kind", "The kind of this metric.", Order: 4), Browsable(true)]
@@ -168,7 +160,7 @@ public class MetricInfo
     /// <summary>
     /// Gets the metric type for all supported types including nullable.
     /// </summary>
-    private MetricType GetMetricType(IMemberData memberData)
+    internal static MetricType GetMemberMetricType(IMemberData memberData)
     {
         if (memberData == null) return MetricType.Unknown;
         return memberData.TypeDescriptor switch

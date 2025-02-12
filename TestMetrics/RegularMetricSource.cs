@@ -1,11 +1,13 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
+using System.Timers;
 using OpenTap;
+using OpenTap.Cli;
 using OpenTap.Metrics;
 using OpenTap.Metrics.Settings;
-using OpenTap.Package;
+using OpenTap.Plugins.BasicSteps;
 
 namespace TestMetrics;
 
@@ -32,40 +34,36 @@ public class RegularMetricSource : IMetricSource
     public int DefaultPollMetric { get; set; }
 }
 
-[Display("Instrument Metric Source 2")]
-public class InstrumentMetricSource2 : Instrument, IMetricSource
+[Display("Log Metric Sink", "This sink will log polled metrics using the OpenTAP logging system.")]
+public class LogMetricSink : IMetricSink
 {
-    [Metric("New Unique Metric", DefaultEnabled = true ) ]
-    public int SomeMetric { get; set; }
-}
+    [Display("Log Metadata", "When enabled, metadata will also be logged.")]
+    public bool LogMetadata { get; set; }
 
-[Display("Instrument Metric Source")]
-public class InstrumentMetricSource : Instrument, IMetricSource
-{
-    [Metric("Poll Metric", kind: MetricKind.Poll, DefaultPollRate = 27)]
-    public int PollMetric { get; set; }
-    
-    [Metric("Push Metric", kind: MetricKind.Push, DefaultPollRate = 120)]
-    public int PushMetric { get; set; }
-    
-    [Metric("PushPoll Metric", kind: MetricKind.PushPoll, DefaultPollRate = 1200)]
-    public int PushPollMetric { get; set; } 
-}
-
-public class AfterCreateAction : ICustomPackageAction
-{
-    public int Order() => 999;
-    
-
-    public bool Execute(PackageDef package, CustomPackageActionArgs customActionArgs)
+    [Display("Metadata Log Level", "The level at which metadata will be logged.")]
+    [EnabledIf(nameof(LogMetadata), HideIfDisabled = true)]
+    public LogSeverity MetadataLogSeverity { get; set; } = LogSeverity.Info;
+    private static readonly TraceSource log = Log.CreateSource("Log Poller"); 
+    public void OnMetricsPolled(MetricsPolledEventArgs e)
     {
-        var tds = TypeData.GetDerivedTypes<IMetricsSettingsItem>().ToArray();
-        using var ms = new MemoryStream();
-        package.SaveTo(ms);
-        var str = Encoding.UTF8.GetString(ms.ToArray());
-        Console.WriteLine(str);
-        return true;
+        foreach (var metric in e.Metrics)
+        {
+            log.Info($"Metric: {metric.Info.MetricFullName}");
+            log.Info($"Value: {metric.Value}");
+            if (LogMetadata)
+            {
+                foreach (var kvp in metric.MetaData)
+                {
+                    if (MetadataLogSeverity == LogSeverity.Info)
+                    {
+                        log.Info($"\t{kvp.Key}={kvp.Value}");
+                    }
+                    else if (MetadataLogSeverity == LogSeverity.Debug)
+                    {
+                        log.Debug($"\t{kvp.Key}={kvp.Value}");
+                    }
+                }
+            }
+        }
     }
-
-    public PackageActionStage ActionStage => PackageActionStage.Create;
 }

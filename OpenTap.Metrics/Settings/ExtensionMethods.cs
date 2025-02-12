@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -19,4 +19,14 @@ internal static class ExtensionMethods
 
     public static IEnumerable<MetricSpecifier> GetMetricSpecifiers(this ITypeData td) =>
         td.GetMetricMembers().Select(x => new MetricSpecifier(x));
+
+    public static IEnumerable<T> DistinctBy<T, T2>(this IEnumerable<T> source, Func<T, T2> selector)
+    {
+        HashSet<T2> occurrences = new HashSet<T2>();
+        foreach (var s in source)
+        {
+            if (occurrences.Add(selector(s)))
+                yield return s;
+        }
+    }
 }

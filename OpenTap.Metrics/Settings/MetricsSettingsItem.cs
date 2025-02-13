@@ -49,21 +49,22 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     static string pollRateReadable(int pollRate, bool isDefault) => secondsToReadableString(pollRate) + (isDefault ? " (Default)" : "");
     void InitPollRates()
     {
-        List<int> defaultPollRates = [5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400];
-        if (_specifier.DefaultPollRate != 0 && !defaultPollRates.Contains(_specifier.DefaultPollRate))
-        {
-            var idx = defaultPollRates.FindIndex(i => i > _specifier.DefaultPollRate);
-            if (idx == -1) idx = defaultPollRates.Count;
-            defaultPollRates.Insert(idx, _specifier.DefaultPollRate);
-        }
+        // Ideally there should only be one Default Poll Rate, but we can't really control this since different plugins may not agree.
+        List<int> pollRates = [5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400];
+        pollRates.AddRange(_specifier.DefaultPollRates);
+        if (PollRate != 0) pollRates.Add(PollRate);
+        pollRates = pollRates.Distinct().ToList();
+        pollRates.Sort(); 
 
-        AvailablePollRates = defaultPollRates;
-        AvailablePollRateStrings =
-            defaultPollRates.Select(x => pollRateReadable(x, x == _specifier.DefaultPollRate)).ToArray();
+        AvailablePollRates = pollRates;
+        AvailablePollRateStrings = pollRates.Select(x => pollRateReadable(x, _specifier.DefaultPollRates.Contains(x))).ToArray();
         {
-            if (PollRate == 0) PollRate = _specifier.DefaultPollRate;
-            if (PollRate == 0) PollRate = 300;
             var idx = AvailablePollRates.IndexOf(PollRate);
+            // This is possible if the default poll rate of a metric was previously selected, but the default poll rate has changed.
+            if (idx == -1) PollRate = 0;
+            if (PollRate == 0) PollRate = _specifier.DefaultPollRates.FirstOrDefault();
+            if (PollRate == 0) PollRate = 300;
+            idx = AvailablePollRates.IndexOf(PollRate);
             _pollRateString = AvailablePollRateStrings[idx];
         } 
     }

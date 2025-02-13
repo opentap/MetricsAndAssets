@@ -22,25 +22,10 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITy
         {
             try
             {
-                HashSet<MetricSpecifier> uniqueMetrics = [];
-                var groups = TypeData.GetDerivedTypes<IMetricSource>().SelectMany(src => src.GetMetricMembers())
-                    .GroupBy(x => new MetricSpecifier(x));
-                foreach (var grp in groups)
-                {
-                    MetricSpecifier d = new MetricSpecifier(grp.Key.Name, grp.Key.Group, grp.Key.Type);
-                    foreach (var g in grp)
-                    {
-                        var attr = g.GetAttribute<MetricAttribute>();
-                        if (attr.DefaultPollRate != 0) d.DefaultPollRate = attr.DefaultPollRate;
-                        if (attr.DefaultEnabled) d.DefaultEnabled = true;
-                        if (attr.Kind.HasFlag(MetricKind.Poll)) d.Kind |= MetricKind.Poll;
-                        if (attr.Kind.HasFlag(MetricKind.Push)) d.Kind |= MetricKind.Push;
-                    }
-
-                    uniqueMetrics.Add(d);
-                }
-
-                metricSpecifiers = uniqueMetrics.ToArray();
+                metricSpecifiers = TypeData.GetDerivedTypes<IMetricSource>().SelectMany(src => src.GetMetricMembers())
+                    .Select(x => new MetricSpecifier(x))
+                    .Distinct()
+                    .ToArray();
                 CacheInvalidated?.Invoke(this, new());
             }
             finally

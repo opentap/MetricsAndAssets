@@ -28,6 +28,8 @@ namespace OpenTap.Metrics.Nats
             }
         }
 
+        public static bool IsRunnerSession() => !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENTAP_RUNNER_SESSION_ID"));
+
         private RunnerExtension()
         {
             var sessionIdVar = Environment.GetEnvironmentVariable("OPENTAP_RUNNER_SESSION_ID");

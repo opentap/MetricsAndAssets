@@ -7,12 +7,13 @@ namespace OpenTap.Metrics.Nats
         public void LogStartupInfo()
         {
             var log = Log.CreateSource("Metrics");
+            if (RunnerExtension.IsRunnerSession())
             {
                 log.Debug("Setup metrics endpoints");
                 try
                 {
                     new AssetDiscoveryEndpoint();
-                    new EnableMetricsPollingEndpoint();
+                        new EnableMetricsPollingEndpoint();
                 }
                 catch (Exception e)
                 {

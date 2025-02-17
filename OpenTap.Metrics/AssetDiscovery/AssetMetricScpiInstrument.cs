@@ -12,7 +12,7 @@ namespace OpenTap.Metrics.AssetDiscovery
     {
         #region Settings
         // Metadata used to associate any metrics defined by this class to an asset with the same identifier returned by the IAssetDiscovery implementation
-        public string Identifier { get; private set; }
+        public string AssetIdentifier { get; private set; }
         public string Manufacturer { get; private set; }
         public string Model { get; private set; }
         #endregion
@@ -55,8 +55,8 @@ namespace OpenTap.Metrics.AssetDiscovery
             // Make sure the IAsset metadata properties "Identifier" and "Model" are set correctly
             var manufacturer = IdnString.Split(',')[0];
             var model = IdnString.Split(',')[1];
-            var serialNumber = IdnString.Split(',')[3];
-            Identifier = $"{manufacturer},{model},{serialNumber}"; // Should be the same as returned by the IAssetDiscovery implementation
+            var serialNumber = IdnString.Split(',')[2];
+            AssetIdentifier = $"{manufacturer},{model},{serialNumber}"; // Should be the same as returned by the IAssetDiscovery implementation
             Model = model;
             Manufacturer = manufacturer;
 
@@ -81,7 +81,8 @@ namespace OpenTap.Metrics.AssetDiscovery
                 }
                 finally
                 {
-                    Close();
+                    logic.ReleaseMutex();
+                    base.Close();
                 }
             }
         }

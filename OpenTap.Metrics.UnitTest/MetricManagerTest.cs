@@ -408,7 +408,7 @@ public class MetricManagerTest
         public string IdnString => $"{Manufacturer},{Model},{SerialNumber},{FirmwareVersion}";
 
         public string Model { get; set; }
-        public string Identifier { get; set; }
+        public string AssetIdentifier { get; set; }
     }
     public class TestMXA : ScpiInstrumentMock, IAsset, IOnPollMetricsCallback
     {
@@ -427,7 +427,7 @@ public class MetricManagerTest
             try
             {
                 var parts = this.IdnString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                this.Identifier = parts[0] + parts[1] + parts[2];
+                this.AssetIdentifier = parts[0] + parts[1] + parts[2];
                 this.Model = parts[1];
                 this.CalibrationDate = DateTime.Parse(ScpiQuery("CALibrationdate?"));
             }

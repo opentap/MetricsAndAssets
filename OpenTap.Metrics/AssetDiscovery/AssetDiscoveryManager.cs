@@ -11,9 +11,9 @@ public static class AssetDiscoveryManager
     /// <summary>
     /// Returns all discovered assets from all available providers.
     /// </summary>
-    public static Dictionary<IAssetDiscovery, DiscoveryResult> DiscoverAllAssets()
+    public static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> DiscoverAllAssets()
     {
-        Dictionary<IAssetDiscovery, DiscoveryResult> assets = new Dictionary<IAssetDiscovery, DiscoveryResult>();
+        Dictionary<IAssetDiscoveryProvider, DiscoveryResult> assets = new Dictionary<IAssetDiscoveryProvider, DiscoveryResult>();
         foreach (var provider in AssetDiscoverySettings.Current.OrderByDescending(x => x.Priority))  // Higher (numeric value) priority should be used first.
         {
             try

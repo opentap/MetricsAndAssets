@@ -8,8 +8,8 @@ namespace OpenTap.Metrics.AssetDiscovery;
 /// Plugin interface for asset discovery.
 /// Implementations of this interface can be used to discover assets such as instruments or DUTs connected to the system.
 /// </summary>
-[Display("Asset Discoverer", Description: "OpenTAP plugin that can discover assets.")]
-public interface IAssetDiscovery : OpenTap.ITapPlugin
+[Display("Asset Discovery Provider", Description: "OpenTAP plugin that can discover assets.")]
+public interface IAssetDiscoveryProvider : OpenTap.ITapPlugin
 {
     /// <summary>
     /// A name short name of this asset discovery provider/implementation.
@@ -35,8 +35,7 @@ public interface IAssetDiscovery : OpenTap.ITapPlugin
 /// Base class for asset discovery implementations.
 /// This is a convenience class that implements the IAssetDiscovery interface.
 /// </summary>
-[Display("")]
-public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
+public abstract class AssetDiscoveryProvider : ValidatingObject, IAssetDiscoveryProvider
 {
     private string _name;
 
@@ -65,7 +64,7 @@ public abstract class AssetDiscovery : ValidatingObject, IAssetDiscovery
     /// discovered asset (same Identifier), the one from the higher priority provider is used
     /// </summary>
     [Display("Priority", "In case two discoverers return the same property for the same asset, the value from the discoverer with the highest priority is used.")]
-    public double Priority { get; set; } = 0;
+    public double Priority { get; protected set; } = 0;
 
     public abstract DiscoveryResult DiscoverAssets();
 
@@ -92,35 +91,8 @@ public class DiscoveryResult
     /// List of assets discovered by a specific implementation of IAssetDiscovery.
     /// Null or an empty list only means no assets were found if IsSuccess is true.
     /// </summary>
-    public IEnumerable<DiscoveredAsset> Assets { get; set; }
-}
-
-/// <summary>
-/// Represents a discovered asset.
-/// IAssetDiscovery implementations can specialize this class to provide additional information.
-/// </summary>
-public class DiscoveredAsset : IAsset
-{
-    /// <summary>
-    /// The manufacturer of the asset. E.g. "Keysight". 
-    /// Should map to the first part of the *IDN? SCPI query, or the Vendor ID in a USB descriptor.
-    /// </summary>
-    public string Manufacturer { get; set; }
-
-
-    /// <summary>
-    /// The type of the asset. E.g. "N9020A".
-    /// This can be used to determine a suitable driver for the asset
-    /// so it can be used as an Asset in OpenTAP.
-    /// Should map to the second part of the *IDN? SCPI query, or the Product ID in a USB descriptor.
-    /// </summary>
-    public string Model { get; set; }
-    /// <summary>
-    /// A unique identifier for the asset. This is used to identify the asset in the system.
-    /// E.g. for an Instrument, this could be a combination of Manufacturer, Model and serial number.
-    /// </summary>
-    public string Identifier { get; set; }
-}
+    public IEnumerable<IAsset> Assets { get; set; }
+} 
 
 /// <summary>
 /// Interface for an object that represents an asset. 
@@ -147,5 +119,18 @@ public interface IAsset
     /// E.g. for an Instrument, this could be a combination of Manufacturer, Model and serial number.
     /// </summary>
     [MetaData(Name = "AssetID")] // Don't change this name as it is used to associate metrics with the asset.
-    string Identifier { get; }
+    [Display("Asset Identifier")]
+    string AssetIdentifier { get; }
+}
+
+public class MyInstrument : AssetMetricScpiInstrument
+{
+    public string Manufacturer => "Keysight";
+    public string Model => "N9510";
+    protected override void UpdateAssetMetrics()
+    {
+        throw new NotImplementedException();
+    }
+
+    public string AssetIdentifier => string.Join(",", this.IdnString.Split([','], StringSplitOptions.RemoveEmptyEntries));
 }

@@ -15,7 +15,7 @@ namespace OpenTap.Metrics.AssetDiscovery
         #region Settings
         // Metadata used to associate any metrics defined by this class to an asset with the same identifier returned by the IAssetDiscovery implementation
         [XmlIgnore]
-        public string Identifier { get; set; }
+        public string AssetIdentifier { get; set; }
         [XmlIgnore]
         public string Manufacturer => "Keysight";
         [XmlIgnore]
@@ -52,7 +52,6 @@ namespace OpenTap.Metrics.AssetDiscovery
             }
 
             LockedOpen();
-            base.Open();
 
             // This is a good time to query for CalDueDate and other asset metrics, 
             // since we know we will not disrupt any ongoing measurements.
@@ -62,13 +61,19 @@ namespace OpenTap.Metrics.AssetDiscovery
             logic.PushMetrics();
         }
 
-        protected abstract void LockedOpen();
-        protected abstract void LockedClose();
+        protected virtual void LockedOpen()
+        {
+            base.Open();
+        }
+
+        protected virtual void LockedClose()
+        {
+            base.Close();
+        }
 
         public override void Close()
         {
             logic.ReleaseMutex();
-            base.Close();
             LockedClose();
         }
 

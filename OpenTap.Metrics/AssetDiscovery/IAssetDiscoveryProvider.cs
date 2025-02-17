@@ -122,15 +122,3 @@ public interface IAsset
     [Display("Asset Identifier")]
     string AssetIdentifier { get; }
 }
-
-public class MyInstrument : AssetMetricScpiInstrument
-{
-    public string Manufacturer => "Keysight";
-    public string Model => "N9510";
-    protected override void UpdateAssetMetrics()
-    {
-        throw new NotImplementedException();
-    }
-
-    public string AssetIdentifier => string.Join(",", this.IdnString.Split([','], StringSplitOptions.RemoveEmptyEntries));
-}

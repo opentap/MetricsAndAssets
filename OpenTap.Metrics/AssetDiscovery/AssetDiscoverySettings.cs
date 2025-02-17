@@ -2,7 +2,7 @@ using System.Linq;
 
 namespace OpenTap.Metrics.AssetDiscovery;
 
-[Display("Asset Discovery Providers", "List of asset discovery implementations to use.")]
+[Display("Asset Discovery", "List of asset discovery providers to use.")]
 public class AssetDiscoverySettings : ComponentSettingsList<AssetDiscoverySettings, IAssetDiscoveryProvider>
 {
     public override void Initialize()

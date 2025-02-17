@@ -23,7 +23,7 @@ namespace OpenTap.Metrics.Nats
                     Priority = kvp.Key.Priority,
                     IsSuccess = kvp.Value.IsSuccess,
                     Error = kvp.Value.Error,
-                    DiscoveredAssets = kvp.Value.Assets?.ToList() ?? Enumerable.Empty<DiscoveredAsset>().ToList()
+                    DiscoveredAssets = kvp.Value.Assets?.ToList() ?? Enumerable.Empty<IAsset>().ToList()
                 }).ToList(),
                 LastSeen = DateTime.UtcNow,
             };
@@ -42,7 +42,7 @@ namespace OpenTap.Metrics.Nats
 
     public class AssetDiscoveryResult
     {
-        public List<DiscoveredAsset> DiscoveredAssets { get; set; }
+        public List<IAsset> DiscoveredAssets { get; set; }
         public double Priority { get; set; }
         public string Name { get; set; }
         public bool IsSuccess { get; set; }

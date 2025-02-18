@@ -3,6 +3,7 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <DEBUG_OPENTAP_NATS>false</DEBUG_OPENTAP_NATS>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     </PropertyGroup>
 
     <!-- Automatic assembly versioning in pipeline-->

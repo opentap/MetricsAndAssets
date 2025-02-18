@@ -10,42 +10,45 @@ using System.Threading;
 
 namespace OpenTap.Metrics.Settings;
 
-public class MetricInfoTypeDataSearcher : ITypeDataSearcherCacheInvalidated, ITypeDataSourceProvider
+public class MetricInfoTypeDataSearcher : ITypeDataSearcher, ITypeDataSourceProvider
 {
-    private long updateStarted = 0;
     public void Search()
     {
-        var processingToken = Interlocked.Increment(ref updateStarted);
-        if (processingToken != 1) return;
-
-        TapThread.Start(() =>
+        _types = null;
+    } 
+    private bool getting = false;
+    private MetricSpecifier[] metricSpecifiers
+    {
+        get
         {
-            try
+            if (getting) return [];
             {
-                metricSpecifiers = TypeData.GetDerivedTypes<IMetricSource>().SelectMany(src => src.GetMetricMembers())
-                    .Select(x => new MetricSpecifier(x))
-                    .Distinct()
-                    .ToArray();
-                CacheInvalidated?.Invoke(this, new());
+                getting = true;
+                try
+                {
+                    return MetricManager.GetMetricInfos()
+                        .Select(x => new MetricSpecifier(x.Member))
+                        .Distinct()
+                        .ToArray();
+                }
+                finally
+                {
+                    getting = false;
+                }
             }
-            finally
-            {
-                Interlocked.Exchange(ref updateStarted, 0);
-            }
-        });
+        }
     }
 
-    private MetricSpecifier[] metricSpecifiers = [];
+    // TODO: This should be invalidated when MetricManager discovers new metrics (e.g. from IAdditionalMetric sources)
+    private MetricInfoTypeData[] _types = null;
 
-    public IEnumerable<ITypeData> Types => metricSpecifiers.Select(MetricInfoTypeData.FromMetricSpecifier);
+    public IEnumerable<ITypeData> Types => _types ??= metricSpecifiers.Select(MetricInfoTypeData.FromMetricSpecifier).ToArray();
     public ITypeDataSource GetSource(ITypeData typeData)
     {
         if (MetricInfoTypeDataSource.TryFromTypeData(typeData, out var src))
             return src;
         return null;
     }
-
-    public event EventHandler<TypeDataCacheInvalidatedEventArgs> CacheInvalidated;
 }
 
 [DebuggerDisplay("{Name}")]

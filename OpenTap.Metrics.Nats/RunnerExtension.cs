@@ -10,11 +10,12 @@ namespace OpenTap.Metrics.Nats
     /// </summary>
     public class RunnerExtension
     {
-        private readonly IConnection connection;
+        private IConnection connection;
         private readonly string runnerId;
         private readonly Guid? sessionId;
         private readonly string baseSubject;
 
+        private static readonly TraceSource _log = Log.CreateSource("Runner Extension");
         private static RunnerExtension instance;
         internal static RunnerExtension Instance
         {
@@ -42,6 +43,34 @@ namespace OpenTap.Metrics.Nats
 
             var options = ConnectionFactory.GetDefaultOptions();
             options.Servers = new string[] { DefaultServer };
+            options.Name = "Runner Extensions";
+            options.MaxReconnect = Options.ReconnectForever;
+            options.ReconnectWait = 1000;
+            options.AllowReconnect = true;
+            options.PingInterval = 45000;
+            options.Timeout = 5000;
+            options.ClosedEventHandler = (sender, args) =>
+            {
+                if (args.Error != null && !string.IsNullOrWhiteSpace(args.Error.Message))
+                {
+                    if (args.Error.Message.ToLowerInvariant().Contains("permission"))
+                    {
+                        _log.Error($"NATS extensions connection closed due to permission violation. Restarting connection. ({args.Error.Message})");
+                        connection = new ConnectionFactory().CreateConnection(options);
+                        _log.Info($"NATS extensions reconnected");
+                    }
+                    else
+                    {
+                        _log.Error($"NATS extensions connection closed {args.Error.Message}");
+                    }
+                }
+                else
+                    _log.Debug($"NATS extensions connection closed");
+            };
+            options.DisconnectedEventHandler += (sender, args) => { _log.Debug($"NATS extensions connection disconnected"); };
+            options.AsyncErrorEventHandler += (sender, args) => { _log.Info("NATS extensions connection async error: {error}", args.Error); };
+            options.ReconnectedEventHandler = (sender, args) => { _log.Info($"NATS extensions connection reconnected"); };
+
             connection = new ConnectionFactory().CreateConnection(options);
             runnerId = connection.ServerInfo.ServerName;
             baseSubject = $"OpenTap.Runner.{runnerId}.Session.{sessionId}";

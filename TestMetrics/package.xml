@@ -6,7 +6,7 @@ Version: The version of the package. Must be in a semver 2.0 compatible format. 
 For Version the following macro is available (Only works if the project directory is under Git source control):
 $(GitVersion) - Gets the version from Git in the recommended format Major.Minor.Build-PreRelease+CommitHash.BranchName.
 -->
-<Package Name="Metrics" xmlns="http://opentap.io/schemas/package" InfoLink="" Version="$(GitVersion)" OS="Windows,Linux,MacOS">
+<Package Name="TestMetrics" xmlns="http://opentap.io/schemas/package" InfoLink="" Version="$(GitVersion)" OS="Windows,Linux,MacOS">
   <Description>This plugin provides interfaces to publish, poll, and subscribe to metrics.</Description>
   <Owner>OpenTAP</Owner>
   <SourceUrl>https://github.com/opentap/OpenTap.Metrics</SourceUrl>
@@ -15,8 +15,8 @@ $(GitVersion) - Gets the version from Git in the recommended format Major.Minor.
     <PackageDependency Package="OpenTAP" Version="^9.16.4+654f0b6b" />
   </Dependencies>
   <Files>
-    <File Path="Packages/Metrics/OpenTap.Metrics.dll" SourcePath="OpenTap.Metrics.dll">
-        <Sign Certificate="Keysight Technologies, Inc."/>
+    <File Path="Packages/TestMetrics/TestMetrics.dll" SourcePath="TestMetrics.dll">
+<!--        <Sign Certificate="Keysight Technologies, Inc."/>-->
         <!-- This is being set automatically in the .csproj  -->
         <!-- <SetAssemblyInfo Attributes="Version"/> -->
     </File>

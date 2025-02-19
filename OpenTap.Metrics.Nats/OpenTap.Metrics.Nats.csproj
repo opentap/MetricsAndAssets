@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <DEBUG_OPENTAP_NATS>false</DEBUG_OPENTAP_NATS>
+        <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <!-- Automatic assembly versioning in pipeline-->
+    <PropertyGroup Condition="'$(ShortVersion)' != ''">
+        <Version>$(ShortVersion)</Version>
+        <AssemblyVersion>$(ShortVersion)</AssemblyVersion>
+        <InformationalVersion>$(GitVersion)</InformationalVersion>
+        <FileVersion>$(ShortVersion).0</FileVersion>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\OpenTap.Metrics\OpenTap.Metrics.csproj"/>
+        <PackageReference Include="NATS.Client" Version="1.1.6"/>
+        <PackageReference Include="OpenTAP" Version="$(OpenTapVersion)"/>
+    </ItemGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <OpenTapPackageDefinitionPath>../package.xml</OpenTapPackageDefinitionPath>
+        <CreateOpenTapPackage>true</CreateOpenTapPackage>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+        <OpenTapPackageReference Include="Sign" Version="$(SIGN_VERSION)" Reference="False" Repository="https://test-automation.pw.keysight.com/api/packages" Token="$(KS8500_REPO_TOKEN)" />
+        <OpenTapPackageReference Include="Keg" Version="0.1.0-beta.69+31496da2" Reference="False" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(DEBUG_OPENTAP_NATS)' == 'true'">
+        <Reference Include="OpenTap.Runner.Client">
+            <HintPath>..\..\runner-client-dotnet\OpenTap.Runner.Client.CSharp\bin\Debug\OpenTap.Runner.Client.dll</HintPath>
+        </Reference>
+        <Reference Include="Newtonsoft.Json">
+            <HintPath>..\..\runner-client-dotnet\OpenTap.Runner.Client.CSharp\bin\Debug\Newtonsoft.Json.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup Condition="'$(DEBUG_OPENTAP_NATS)' == 'false'">
+        <PackageReference Include="OpenTAP.Runner.Client" Version="2.6.0-beta.3"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    </ItemGroup>
+</Project>

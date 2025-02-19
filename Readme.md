@@ -1,4 +1,4 @@
-# OpenTAP Metrics
+# Metrics and Assets
 
 This plugin provides interfaces to push, poll, and subscribe to metrics. This
 can be used to e.g. make periodic measurements on a connected instrument. By
@@ -6,6 +6,11 @@ formalizing the concept of push (event-based) and poll (measurement-based)
 metrics, and providing a common way to produce and consume them, this plugin
 enables a great deal of interoperability between different metric providers and
 listeners.
+
+This package also defines an Asset Discovery plugin type and
+related functionality. This is a semi independent feature, but it is related to
+metrics in that it metrics can be associated with an asset instead of the default
+of associating the metric with the entire system.
 
 ## Poll Metrics
 
@@ -391,3 +396,99 @@ MetricManager.OnMetricCreated += onMetricCreated;
 The OnMetricCreated event handler is called immediately when the new metric is
 created, so any listeners have the opportunity to subscribe to the first
 instance of a new `Push` metric.
+
+# Assets
+
+This package also contains definitions for the `IAssetDiscovery` plugin type and
+related functionality. This is a semi independent feature, but it is related to
+metrics in that it metrics can be associated with an asset instead of the default
+of associating the metric with the entire system.
+
+## Discovering Assets
+
+To add asset discovery capabilities to opentap, you should return a list of 
+`DiscoveredAsset` from the `DiscoverAssets` method in your `IAssetDiscovery` 
+implementation. When used in e.g. a Runner DiscoverAssets() will be called periodically
+so the results can be collected in KS8500.
+    
+```cs
+public class MyAssetDiscovery : IAssetDiscovery
+{
+    public DiscoveryResult DiscoverAssets()
+    {
+        // TODO: Code that queries e.g. the network, or other peripherals to find assets
+    }
+}
+```
+
+Each `DiscoveredAsset` should contain a unique `Identifier` and a `Model`. The identifier
+is used to identify this specific asset and should be the same if the asset is later connected
+to a different system (e.g. Runner/Station). The model is a string that describes the asset
+model and can be be used to lookup a suitable driver for the asset.
+
+`IAssetDiscovery` implementations can also specialize `DiscoveredAsset` to include additional
+information (e.g. firmware version).
+
+## Adding information to an asset using Metrics
+
+In some situations, the `IAssetDiscovery` implementation cannot generically get the desired 
+information from all possible asset models that it can discover. In these cases, the asset 
+driver can provide additional information about the asset using metrics. To do this, the driver
+should implement IAsset and be sure to set the same string in the `IAsset.Identifier` property
+as the `DiscoveredAsset.Identifier` property.
+
+```cs
+public class MyInstrument : ScpiInstrument, IOnPollMetricCallback, IAsset
+{
+    [Metadata]
+    public string Identifier { get; }
+
+    [Metric("Calibration Date", DefaultPollRate: 3600, DefaultEnabled: true)]
+    public DateTime CalibrationDate { get; private set; }
+
+    public void OnPollMetrics(IEnumerable<MetricInfo> metrics)
+    {
+        bool shouldClose = false;
+        if (!this.IsConnected)
+        {
+            this.Open();
+            shouldClose = true;
+        }
+
+        try
+        {
+            var parts = this.IdnString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            this.Identifier = parts[0] + parts[1] + parts[2];
+            this.Model = parts[1];
+            var calInfoResponse = ScpiQuery("SYSTem:SERVice:MANagement:CALibration:INFormation?"));
+            var calInfo = JsonConvert.DeserializeObject<Dictionary<string, string>>(calInfoResponse);
+            this.CalibrationDate = DateTime.Parse(calInfo["CalDate"]);
+        }
+        finally
+        {
+            if (shouldClose)
+                this.Close();
+        }
+    }
+}
+```
+
+This package also provides `AssetMetricInstrument` and `AssetMetricScpiInstrument` base classes
+that can be used to simplify the implementation in the above example. These classes also implement a 
+mutex to ensure that the instrument is only Opened once at a time to prevent metrics polling from 
+interfering with ongoing TestPlan runs. Using these classes, the above example can be simplified to:
+
+```cs
+public class MyInstrument : AssetMetricScpiInstrument
+{
+    [Metric("Calibraion Date", null, MetricKind.PushPoll, DefaultPollRate = 3600, DefaultEnabled = true)]
+    public DateTime CalibrationDate { get; set; }
+
+    protected override void UpdateAssetMetrics()
+    {
+        string calInfoRaw = ScpiQuery("SYSTem:SERVice:MANagement:CALibration:INFormation?"); 
+        var calInfo = JsonConvert.DeserializeObject<Dictionary<string, string>>(calInfoResponse);
+        this.CalibrationDate = DateTime.Parse(calInfo["CalDate"]);
+    }
+}
+```

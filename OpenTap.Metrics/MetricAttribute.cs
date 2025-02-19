@@ -18,6 +18,23 @@ public class MetricAttribute : Attribute
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     public MetricKind Kind { get; }
 
+    /// <summary> 
+    /// The suggested default poll rate of the metric, in seconds. 
+    /// This is a hint to the client. A UI is free to ignore this hint (or round it up/down).
+    ///
+    /// We recommend one of the following values, if applicable:
+    /// 5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400
+    /// These values will be displayed nicely in all UIs, and polling of different metrics in these intervals
+    /// can easily be batched by metric consumers.
+    /// </summary>
+    public int DefaultPollRate { get; set; }
+
+    /// <summary> 
+    /// Suggestion to clients on whether to poll this metric by default. 
+    /// This is a hint to the client. A UI is free to ignore this hint.
+    /// </summary>
+    public bool DefaultEnabled { get; set; } = false;
+
     /// <summary> Creates a new instance of the metric attribute </summary>
     ///  <param name="name">Optionally, the name of the metric.</param>
     ///  <param name="group">The group of the metric.</param>

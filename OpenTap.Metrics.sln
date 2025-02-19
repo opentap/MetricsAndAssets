@@ -7,6 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTap.Metrics", "OpenTap.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTap.Metrics.UnitTest", "OpenTap.Metrics.UnitTest\OpenTap.Metrics.UnitTest.csproj", "{A15E3E1A-961D-4103-9547-62A8F06993EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTap.Metrics.Nats", "OpenTap.Metrics.Nats\OpenTap.Metrics.Nats.csproj", "{1FE4AE27-797F-4189-BE49-B3A496EA23C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestMetrics", "TestMetrics\TestMetrics.csproj", "{479F518F-000F-4AAA-8A01-0133148880F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +27,13 @@ Global
 		{A15E3E1A-961D-4103-9547-62A8F06993EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A15E3E1A-961D-4103-9547-62A8F06993EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A15E3E1A-961D-4103-9547-62A8F06993EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FE4AE27-797F-4189-BE49-B3A496EA23C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FE4AE27-797F-4189-BE49-B3A496EA23C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FE4AE27-797F-4189-BE49-B3A496EA23C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FE4AE27-797F-4189-BE49-B3A496EA23C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{479F518F-000F-4AAA-8A01-0133148880F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{479F518F-000F-4AAA-8A01-0133148880F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{479F518F-000F-4AAA-8A01-0133148880F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{479F518F-000F-4AAA-8A01-0133148880F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

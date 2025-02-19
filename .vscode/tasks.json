@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build (debug)",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "-c",
+                "Debug",
+                "${workspaceFolder}"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build (release)",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "-c",
+                "Release",
+                "${workspaceFolder}"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build"
+            }
+        }
+    ]
+}

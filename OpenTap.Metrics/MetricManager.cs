@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace OpenTap.Metrics;
 
@@ -61,19 +62,27 @@ public static class MetricManager
         List<object> producers = new List<object>();
         foreach (var type in types)
         {
-            // DUT and Instrument settings will explicitly added later if they are configured on the bench,
-            // regardless of whether or not they are IMetricSources.
-            if (type.DescendsTo(typeof(IDut)) || type.DescendsTo(typeof(IInstrument)))
-                continue;
-            if (type.DescendsTo(typeof(ComponentSettings)))
+            try
             {
-                if (ComponentSettings.GetCurrent(type) is IMetricSource producer)
-                    producers.Add(producer);
+                // DUT and Instrument settings will explicitly added later if they are configured on the bench,
+                // regardless of whether or not they are IMetricSources.
+                if (type.DescendsTo(typeof(IDut)) || type.DescendsTo(typeof(IInstrument)))
+                    continue;
+                if (type.DescendsTo(typeof(ComponentSettings)))
+                {
+                    if (ComponentSettings.GetCurrent(type) is IMetricSource producer)
+                        producers.Add(producer);
+                }
+                else
+                {
+                    if (_metricProducers.GetOrAdd(type, t => (IMetricSource)t.CreateInstance()) is IMetricSource m)
+                        producers.Add(m);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                if (_metricProducers.GetOrAdd(type, t => (IMetricSource)t.CreateInstance()) is IMetricSource m)
-                    producers.Add(m);
+                // Avoid failing completely if a metric source is misbehaving
+                log.ErrorOnce(type, $"Error in metric source '{type.Name}': {ex.Message}");
             }
         }
 
@@ -118,28 +127,38 @@ public static class MetricManager
         var isSupportedDoubleType = type == typeof(double) || type == typeof(double?);
         var isSupportedBoolType = type == typeof(bool) || type == typeof(bool?);
         var isSupportedIntType = type == typeof(int) || type == typeof(int?);
+        var isSupportedDateType = type == typeof(DateTime) || type == typeof(DateTime?);
 
-        return isSupportedDoubleType || isSupportedBoolType || isSupportedIntType || type == typeof(string);
+        return isSupportedDoubleType || isSupportedBoolType || isSupportedIntType || isSupportedDateType || type == typeof(string);
     }
 
-    private static readonly ConcurrentDictionary<ITypeData, IMetricSource> _metricProducers =
-        new ConcurrentDictionary<ITypeData, IMetricSource>();
+    private static readonly ConcurrentDictionary<ITypeData, IMetricSource> _metricProducers = new();
 
     /// <summary> Push a double metric. </summary>
     public static void PushMetric(MetricInfo metric, double value)
     {
-        PushMetric(new DoubleMetric(metric, value));
+        var metadata = GetMetadata(metric.Source);
+        PushMetric(new DoubleMetric(metric, value, metadata));
     }
 
     /// <summary> Push a boolean metric. </summary>
     public static void PushMetric(MetricInfo metric, bool value)
     {
-        PushMetric(new BooleanMetric(metric, value));
+        var metadata = GetMetadata(metric.Source);
+        PushMetric(new BooleanMetric(metric, value, metadata));
     }
     /// <summary> Push a string metric. </summary>
     public static void PushMetric(MetricInfo metric, string value)
     {
-        PushMetric(new StringMetric(metric, value));
+        var metadata = GetMetadata(metric.Source);
+        PushMetric(new StringMetric(metric, value, metadata));
+    }
+
+    /// <summary> Push a DateTime metric. (will be converted to a string in ISO 8601 format) </summary>
+    public static void PushMetric(MetricInfo metric, DateTime value)
+    {
+        var metadata = GetMetadata(metric.Source);
+        PushMetric(new StringMetric(metric, value.ToUniversalTime().ToString("o"), metadata)); // Convert DateTime to ISO 8601 compliant string
     }
 
     /// <summary>
@@ -175,7 +194,8 @@ public static class MetricManager
     public static IEnumerable<IMetric> PollMetrics(IEnumerable<MetricInfo> interestSet)
     {
         var interest = interestSet.Where(i => i.Kind.HasFlag(MetricKind.Poll)).ToHashSet();
-        
+        Dictionary<object, Dictionary<string, string>> metadataLookup = new();
+
         foreach (var source in interest.GroupBy(i => i.Source))
         {
             if (source.Key is IOnPollMetricsCallback producer)
@@ -189,28 +209,35 @@ public static class MetricManager
                     log.Warning($"Unhandled exception in OnPollMetrics in '{producer}': '{ex.Message}'");
                 }
             }
+
+            var metadata = GetMetadata(source.Key);
+            metadataLookup[source.Key] = metadata;
         }
 
         foreach (var metric in interest)
         {
             var metricValue = metric.GetValue(metric.Source);
+            var metadata = metadataLookup[metric.Source];
             switch (metricValue)
             {
                 case bool v:
-                    yield return new BooleanMetric(metric, v);
+                    yield return new BooleanMetric(metric, v, metadata);
                     break;
                 case double v:
-                    yield return new DoubleMetric(metric, v);
+                    yield return new DoubleMetric(metric, v, metadata);
                     break;
                 case int v:
-                    yield return new DoubleMetric(metric, v);
+                    yield return new DoubleMetric(metric, v, metadata);
                     break;
                 case string v:
-                    yield return new StringMetric(metric, v);
+                    yield return new StringMetric(metric, v, metadata);
                     break;
-                    // String metrics does also support null values, but does not use the nullable flag.
+                case DateTime v:
+                    yield return new StringMetric(metric, v.ToUniversalTime().ToString("o"), metadata);
+                    break;
+                // String metrics does also support null values, but does not use the nullable flag.
                 case null when metric.Type.HasFlag(MetricType.Nullable) || metric.Type.HasFlag(MetricType.String):
-                    yield return new EmptyMetric(metric);
+                    yield return new EmptyMetric(metric, metadata);
                     break;
                 default:
                     log.ErrorOnce(metric, "Metric value is not a supported type: {0} of type {1}", metric.Name, metricValue?.GetType().Name ?? "null");
@@ -243,6 +270,7 @@ public static class MetricManager
 
     private static MetricInfo CreateMetric<T>(IAdditionalMetricSources owner, string name, string groupName, MetricKind kind, Func<T> pollFunction = null)
     {
+        pollFunction ??= () => default;
         var declaring = TypeData.GetTypeData(owner);
         var descriptor = TypeData.FromType(typeof(T));
         var metric = new MetricAttribute(name, group: groupName, kind: kind);
@@ -270,6 +298,50 @@ public static class MetricManager
     {
         return CreateMetric<T>(owner, name, groupName, MetricKind.Push, null);
     }
+    
+    public static MetricInfo CreatePushPollMetric<T>(IAdditionalMetricSources owner, Func<T> pollFunction, string name, string groupName)
+    {
+        if (pollFunction == null)
+            throw new ArgumentNullException(nameof(pollFunction));
+        return CreateMetric<T>(owner, name, groupName, MetricKind.PushPoll, pollFunction);
+    }
+
+    private static Dictionary<string, string> GetMetadata(object source)
+    {
+        var result = new Dictionary<string, string>();
+        var td = TypeData.GetTypeData(source);
+        IEnumerable<(IMemberData member, MetaDataAttribute metadata)> membersWithMetadata =
+            td.GetMembers().Select(m => (m, _getMetadataAttribute(m)));
+        foreach (var item in membersWithMetadata)
+        {
+            if (item.metadata != null)
+            {
+                var attrName = item.metadata.Name ?? item.member.GetDisplayAttribute().Name;
+                result[attrName] = item.member.GetValue(source)?.ToString();
+            }
+        }
+
+        return result;
+
+        MetaDataAttribute _getMetadataAttribute2(Type t, string member)
+        {
+            foreach (var @if in t.GetInterfaces())
+            {
+                var prop = @if.GetMember(member);
+                foreach (var memberInfo in prop)
+                {
+                    if (memberInfo.GetCustomAttribute<MetaDataAttribute>() is { } m) return m;
+                }
+            }
+
+            return null;
+        }
+        MetaDataAttribute _getMetadataAttribute(IMemberData mem)
+        {
+            if (mem.GetAttribute<MetaDataAttribute>() is MetaDataAttribute m) return m;
+            return _getMetadataAttribute2(mem.DeclaringType.AsTypeData()?.Type, mem.Name);
+        }
+    }
 
     public delegate void MetricAvailabilityChangedEventHandler(MetricAvailabilityChangedEventsArgs args);
     public static event MetricAvailabilityChangedEventHandler OnMetricAvailabilityChanged;
@@ -279,5 +351,11 @@ public static class MetricManager
         metricInfo.IsAvailable = isAvailable;
         OnMetricAvailabilityChanged?.Invoke(new MetricAvailabilityChangedEventsArgs(metricInfo));
         _pushMetricInfos[metricInfo.Member] = metricInfo;
+    }
+
+    private static readonly ConcurrentDictionary<string, MetricInfo> metricNameLookup = new();
+    internal static MetricInfo GetMetricByName(string value)
+    {
+        return metricNameLookup.GetOrAdd(value, _ => GetMetricInfos().FirstOrDefault(m => m.MetricFullName == value));
     }
 }

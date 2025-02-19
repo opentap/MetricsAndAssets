@@ -5,10 +5,9 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <TargetFrameworkIdentifier></TargetFrameworkIdentifier>
-    <TargetFrameworkVersion></TargetFrameworkVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>10</LangVersion>
+    <LangVersion>12</LangVersion>
+    <CreateOpenTapPackage>false</CreateOpenTapPackage> <!-- The package build is kicked off by another project that gets build later  -->
   </PropertyGroup>
   
   <!-- Automatic assembly versioning in pipeline-->
@@ -19,13 +18,6 @@
     <FileVersion>$(ShortVersion).0</FileVersion> 
   </PropertyGroup>
   
-  <PropertyGroup>
-    <OpenTapPackageDefinitionPath>package.xml</OpenTapPackageDefinitionPath>
-    <CreateOpenTapPackage>false</CreateOpenTapPackage>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <CreateOpenTapPackage>true</CreateOpenTapPackage>
-  </PropertyGroup>
   <ItemGroup Condition="'$(OS)' == 'WINDOWS_NT' AND '$(Configuration)' == 'Debug'"> 
     <AdditionalOpenTapPackage Include="Editor"/>
     <AdditionalOpenTapPackage Include="Live Results Panel"/> 
@@ -34,14 +26,17 @@
   <ItemGroup>
     <InternalsVisibleTo Include="OpenTap.Metrics.UnitTest" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <PackageReference Include="OpenTAP" Version="$(OpenTapVersion)" />
+
+
+  <ItemGroup Condition="$(OS) == 'UNIX' AND '$(Configuration)' == 'Debug'">
+    <OpenTapPackageReference Include="TUI" version="1"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <OpenTapPackageReference Include="Sign" Version="$(SIGN_VERSION)" Reference="False" Repository="https://test-automation.pw.keysight.com/api/packages" Token="$(KS8500_REPO_TOKEN)" />
-    <OpenTapPackageReference Include="Keg" Version="0.1.0-beta.69+31496da2" Reference="False" />
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    <PackageReference Include="OpenTAP" Version="$(OpenTapVersion)" />
+    <OpenTapPackageReference Include="OpenTAP" Version="$(OpenTapVersion)" />
   </ItemGroup>
+
 
 </Project>

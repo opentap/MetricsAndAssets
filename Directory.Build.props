@@ -5,6 +5,7 @@
         
     <PropertyGroup>
         <OpenTapVersion>9.25.1</OpenTapVersion>
+        <OpenTapVersion Condition="$([MSBuild]::IsOSPlatform('OSX'))">9.26.1</OpenTapVersion>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>

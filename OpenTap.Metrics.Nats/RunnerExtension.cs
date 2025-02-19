@@ -42,7 +42,9 @@ namespace OpenTap.Metrics.Nats
             }
             sessionId = Guid.Parse(sessionIdVar);
 
-            // The runner secretly allows the user to change the server URL by passing a command line argument. We should check for that to make sure we connect to the correct server.
+            // The runner secretly allows the user to change the server URL by passing the --server-url command line argument. 
+            // We should check for that to make sure we connect to the correct server.
+            // This is mostly for internal use, as that command line argument is not documented.
             var clargs = Environment.GetCommandLineArgs();
             if (clargs.Contains("--nats-server") && clargs.Length > Array.IndexOf(clargs, "--nats-server") + 1)
             {
@@ -57,30 +59,12 @@ namespace OpenTap.Metrics.Nats
             options.AllowReconnect = true;
             options.PingInterval = 45000;
             options.Timeout = 5000;
-            options.ClosedEventHandler = (sender, args) =>
-            {
-                if (args.Error != null && !string.IsNullOrWhiteSpace(args.Error.Message))
-                {
-                    if (args.Error.Message.ToLowerInvariant().Contains("permission"))
-                    {
-                        _log.Error($"NATS extensions connection closed due to permission violation. Restarting connection. ({args.Error.Message})");
-                        connection = new ConnectionFactory().CreateConnection(options);
-                        _log.Info($"NATS extensions reconnected");
-                    }
-                    else
-                    {
-                        _log.Error($"NATS extensions connection closed {args.Error.Message}");
-                    }
-                }
-                else
-                    _log.Debug($"NATS extensions connection closed");
-            };
-            options.DisconnectedEventHandler += (sender, args) => { _log.Debug($"NATS extensions connection disconnected"); };
-            options.AsyncErrorEventHandler += (sender, args) => { _log.Info("NATS extensions connection async error: {error}", args.Error); };
-            options.ReconnectedEventHandler = (sender, args) => { _log.Info($"NATS extensions connection reconnected"); };
+            options.DisconnectedEventHandler += (sender, args) => { _log.Debug($"NATS connection disconnected"); };
+            options.AsyncErrorEventHandler += (sender, args) => { _log.Info("NATS connection async error: {error}", args.Error); };
+            options.ReconnectedEventHandler = (sender, args) => { _log.Info($"NATS connection reconnected"); };
 
             connection = new ConnectionFactory().CreateConnection(options);
-            _log.Info($"NATS extensions connected to {DefaultServer}");
+            _log.Debug($"NATS connected to {DefaultServer}");
             runnerId = connection.ServerInfo.ServerName;
             baseSubject = $"OpenTap.Runner.{runnerId}.Session.{sessionId}";
         }

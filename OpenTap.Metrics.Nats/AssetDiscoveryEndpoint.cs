@@ -15,7 +15,6 @@ namespace OpenTap.Metrics.Nats
 
         private AssetDiscoveryResponse DiscoverAllAssets()
         {
-            _log.Debug("Asset Discovery: Discovering all assets");
             AssetDiscoveryResponse discoveryResponse = new AssetDiscoveryResponse
             {
                 AssetProviders = AssetDiscoveryManager.DiscoverAllAssets().Select(kvp => new AssetDiscoveryResult

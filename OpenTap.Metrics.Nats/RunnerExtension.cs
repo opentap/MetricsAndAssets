@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using NATS.Client;
 using Newtonsoft.Json;
@@ -41,6 +42,13 @@ namespace OpenTap.Metrics.Nats
             }
             sessionId = Guid.Parse(sessionIdVar);
 
+            // The runner secretly allows the user to change the server URL by passing a command line argument. We should check for that to make sure we connect to the correct server.
+            var clargs = Environment.GetCommandLineArgs();
+            if (clargs.Contains("--nats-server") && clargs.Length > Array.IndexOf(clargs, "--nats-server") + 1)
+            {
+                DefaultServer = clargs[Array.IndexOf(clargs, "--nats-server") + 1];
+            }
+
             var options = ConnectionFactory.GetDefaultOptions();
             options.Servers = new string[] { DefaultServer };
             options.Name = "Runner Extensions";
@@ -72,6 +80,7 @@ namespace OpenTap.Metrics.Nats
             options.ReconnectedEventHandler = (sender, args) => { _log.Info($"NATS extensions connection reconnected"); };
 
             connection = new ConnectionFactory().CreateConnection(options);
+            _log.Info($"NATS extensions connected to {DefaultServer}");
             runnerId = connection.ServerInfo.ServerName;
             baseSubject = $"OpenTap.Runner.{runnerId}.Session.{sessionId}";
         }

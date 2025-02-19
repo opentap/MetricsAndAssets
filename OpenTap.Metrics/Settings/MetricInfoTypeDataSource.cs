@@ -27,9 +27,7 @@ class MetricInfoTypeDataSource : ITypeDataSource
         var preferredSource =
             metricSources.FirstOrDefault(x => Installation.Current.FindPackageContainingType(x) == null) ??
             metricSources.FirstOrDefault();
-        if (preferredSource == null)
-            return false;
-        var std = preferredSource.AsTypeData();
+        var std = preferredSource?.AsTypeData();
         if (std?.Assembly == null) return false;
         // 4. Find all sources which originale from the same assembly as this source
         src = _cache.GetOrAdd(std.Assembly.Load(),

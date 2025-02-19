@@ -16,7 +16,7 @@ $(GitVersion) - Gets the version from Git in the recommended format Major.Minor.
   <SourceUrl>https://github.com/opentap/OpenTap.Metrics</SourceUrl>
   <SourceLicense>MPL-2.0</SourceLicense>
   <Dependencies>
-    <PackageDependency Package="OpenTAP" Version="^9.16.4+654f0b6b" />
+    <PackageDependency Package="OpenTAP" Version="^9.22.1+9447a2af" />
   </Dependencies>
   <Files>
     <File Path="Packages/Metrics and Assets/OpenTap.Metrics.dll" SourcePath="OpenTap.Metrics.dll">

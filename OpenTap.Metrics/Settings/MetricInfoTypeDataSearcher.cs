@@ -14,7 +14,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcher, ITypeDataSourceProv
 {
     public void Search()
     {
-        _types = null;
+        // _types = null;
     } 
     private bool getting = false;
     private MetricSpecifier[] metricSpecifiers
@@ -39,10 +39,14 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcher, ITypeDataSourceProv
         }
     }
 
-    // TODO: This should be invalidated when MetricManager discovers new metrics (e.g. from IAdditionalMetric sources)
-    private MetricInfoTypeData[] _types = null;
+    // TODO: caching this is difficult for a few reasons:
+    // 1. The cache should be invalidated when a dut / instrument is added or removed (i.e. this cache is now bench-profile specific)
+    // 2. The cache should be invalidated when an IAdditionalMetrics implementation adds or removes a metric
+    // 2) cannot really be detected, so we can only discover that fact when GetMetricInfos() is actually called
+    // I have opted to disable caching for now, but we can look into 
+    // private MetricInfoTypeData[] _types = null;
 
-    public IEnumerable<ITypeData> Types => _types ??= metricSpecifiers.Select(MetricInfoTypeData.FromMetricSpecifier).ToArray();
+    public IEnumerable<ITypeData> Types => metricSpecifiers.Select(MetricInfoTypeData.FromMetricSpecifier).ToArray();
     public ITypeDataSource GetSource(ITypeData typeData)
     {
         if (MetricInfoTypeDataSource.TryFromTypeData(typeData, out var src))

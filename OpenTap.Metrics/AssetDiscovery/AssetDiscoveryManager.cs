@@ -44,7 +44,10 @@ public static class AssetDiscoveryManager
             foreach (var p in providers)
             {
                 var provider = p; 
-                _workQueue.TryAdd(provider, Task.Run(() => DiscoverAssets(provider)));
+                // If the provider is already in the list, the Discover query timed out in the last time.
+                // In that case, we should wait for the previous query to complete instead of starting a new one.
+                if (_workQueue.ContainsKey(provider) == false)
+                    _workQueue.TryAdd(provider, Task.Run(() => DiscoverAssets(provider)));
             }
 
             Task.WaitAll(_workQueue.Values.ToArray<Task>(), timeout);

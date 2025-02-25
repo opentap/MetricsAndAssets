@@ -18,6 +18,7 @@ namespace OpenTap.Metrics.Nats
 
         private static readonly TraceSource _log = Log.CreateSource("Runner Extension");
         private static RunnerExtension instance;
+
         internal static RunnerExtension Instance
         {
             get
@@ -26,6 +27,7 @@ namespace OpenTap.Metrics.Nats
                 {
                     instance = new RunnerExtension();
                 }
+
                 return instance;
             }
         }
@@ -40,6 +42,7 @@ namespace OpenTap.Metrics.Nats
                 // This is not a session, don't attempt to connect to NATS.
                 return;
             }
+
             sessionId = Guid.Parse(sessionIdVar);
 
             // The runner secretly allows the user to change the server URL by passing the --server-url command line argument. 
@@ -83,6 +86,7 @@ namespace OpenTap.Metrics.Nats
             {
                 return;
             }
+
             Instance.connection.SubscribeAsync($"{Instance.baseSubject}.Request.{endpoint}", (sender, args) =>
             {
                 try
@@ -107,10 +111,19 @@ namespace OpenTap.Metrics.Nats
             {
                 return;
             }
+
             Instance.connection.SubscribeAsync($"{Instance.baseSubject}.Request.{endpoint}", (sender, args) =>
             {
-                var response = handler(JsonConvert.DeserializeObject<Trequest>(Encoding.UTF8.GetString(args.Message.Data)));
-                Instance.connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
+                try
+                {
+                    var response = handler(JsonConvert.DeserializeObject<Trequest>(Encoding.UTF8.GetString(args.Message.Data)));
+                    Instance.connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
+                }
+                catch (Exception ex)
+                {
+                    _log.Error($"Error handling request {endpoint}");
+                    _log.Debug(ex);
+                }
             });
         }
     }

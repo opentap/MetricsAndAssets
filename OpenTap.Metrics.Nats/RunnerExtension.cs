@@ -85,8 +85,16 @@ namespace OpenTap.Metrics.Nats
             }
             Instance.connection.SubscribeAsync($"{Instance.baseSubject}.Request.{endpoint}", (sender, args) =>
             {
-                var response = handler();
-                Instance.connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
+                try
+                {
+                    var response = handler();
+                    Instance.connection.Publish(args.Message.Reply, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(response)));
+                }
+                catch (Exception ex)
+                {
+                    _log.Error($"Error handling request {endpoint}");
+                    _log.Debug(ex);
+                }
             });
         }
 

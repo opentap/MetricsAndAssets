@@ -8,6 +8,7 @@ namespace OpenTap.Metrics.Nats
     public class AssetDiscoveryEndpoint
     {
         private readonly TraceSource _log = Log.CreateSource("Asset Discovery");
+
         public AssetDiscoveryEndpoint()
         {
             RunnerExtension.MapEndpoint("DiscoverAssets", DiscoverAllAssets);
@@ -15,6 +16,7 @@ namespace OpenTap.Metrics.Nats
 
         private AssetDiscoveryResponse DiscoverAllAssets()
         {
+            _log.Debug("Asset Discovery requested");
             AssetDiscoveryResponse discoveryResponse = new AssetDiscoveryResponse
             {
                 AssetProviders = AssetDiscoveryManager.DiscoverAllAssets().Select(kvp => new AssetDiscoveryResult

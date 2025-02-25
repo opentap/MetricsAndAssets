@@ -58,8 +58,8 @@ public static class AssetDiscoveryManager
                 {
                     if (task.IsCompleted)
                     {
-                        _workQueue.TryRemove(provider, out var value);
-                        assets[provider] = value.Result;
+                        _workQueue.TryRemove(provider, out _);
+                        assets[provider] = task.Result;
                     }
                     else
                     {

@@ -441,6 +441,8 @@ to use these property Display names when applicable to provide a consistent user
 | SerialNumber | The serial number of the asset (e.g. as provided by *IDN?) |
 | FirmwareVersion | The firmware version of the asset (e.g. as provided by *IDN?) |
 | Alias | A user-friendly name for the connection string as normally used in VISA |
+| Class | The class of the asset |
+| InterfaceType | The type of interface used to connect to the asset (e.g. GPIB) |
 
 Some additional properties are reserved for internal use and should not be set by the `IAssetDiscovery` implementation:
 

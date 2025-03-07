@@ -65,7 +65,7 @@ public static class AssetDiscoveryManager
                     {
                         assets[provider] = new DiscoveryResult()
                         {
-                            IsSuccess = false, Error = "Timeout"
+                            IsSuccess = false, Error = "Asset discovery still in progress.."
                         };
                         log.Warning(
                             $"Provider {provider.GetType().Name} is taking a long time to complete. " +

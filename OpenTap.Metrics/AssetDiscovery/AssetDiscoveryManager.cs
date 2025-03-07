@@ -36,7 +36,7 @@ public static class AssetDiscoveryManager
     {
         lock (lockObj)
         {
-            TimeSpan timeout = TimeSpan.FromMinutes(1);
+            TimeSpan timeout = TimeSpan.FromSeconds(20);
             Dictionary<IAssetDiscoveryProvider, DiscoveryResult> assets =
                 new Dictionary<IAssetDiscoveryProvider, DiscoveryResult>();
             var providers = AssetDiscoverySettings.Current.OrderByDescending(x => x.Priority).ToArray();
@@ -65,7 +65,7 @@ public static class AssetDiscoveryManager
                     {
                         assets[provider] = new DiscoveryResult()
                         {
-                            IsSuccess = false, Error = "Timeout"
+                            IsSuccess = false, Error = "Asset discovery still in progress.."
                         };
                         log.Warning(
                             $"Provider {provider.GetType().Name} is taking a long time to complete. " +
@@ -77,10 +77,4 @@ public static class AssetDiscoveryManager
             return assets;
         }
     }
-
-
-    // public static void PushDiscoveredAssets(DiscoveredAsset asset)
-    // {
-    //
-    // }
 }

@@ -434,7 +434,7 @@ to use these property Display names when applicable to provide a consistent user
 
 | Property Display Name | Meaning |
 | --- | --- |
-| AssetName | A user friendly name used in UIs to refer to the asset. |
+| AssetName | A user friendly name used in UIs to refer to the asset. Users can edit this later. |
 | AssetIdentifier | A unique identifier for the asset (required) |
 | Model | The model of the asset (e.g. as provided by *IDN?) (required) |
 | Manufacturer | The manufacturer of the asset (e.g. as provided by *IDN?) (required) |

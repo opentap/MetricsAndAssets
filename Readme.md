@@ -421,13 +421,39 @@ public class MyAssetDiscovery : IAssetDiscovery
 }
 ```
 
-Each `DiscoveredAsset` should contain a unique `Identifier` and a `Model`. The identifier
+Each `DiscoveredAsset` should contain a unique `AssetIdentifier`, a `Manufacturer` and a `Model`. The identifier
 is used to identify this specific asset and should be the same if the asset is later connected
-to a different system (e.g. Runner/Station). The model is a string that describes the asset
+to a different system (e.g. Runner/Station). The manufacturer and model together describe the asset
 model and can be be used to lookup a suitable driver for the asset.
 
 `IAssetDiscovery` implementations can also specialize `DiscoveredAsset` to include additional
 information (e.g. firmware version).
+
+As assets from different implementations are usually displayed in the same list, it is recommended
+to use these property Display names when applicable to provide a consistent user experience.
+
+| Property Display Name | Meaning |
+| --- | --- |
+| AssetName | A user friendly name used in UIs to refer to the asset. Users can edit this later. |
+| AssetIdentifier | A unique identifier for the asset (required) |
+| Model | The model of the asset (e.g. "N9030A" as provided by *IDN?) (required) |
+| Manufacturer | The manufacturer of the asset (e.g. "Keysight Technologies" as provided by *IDN?) (required) |
+| Address | The address of the asset (e.g. VISA address for an instrument) |
+| SerialNumber | The serial number of the asset (e.g. "US00071182" as provided by *IDN?) |
+| FirmwareVersion | The firmware version of the asset (e.g. "A.14.16" as provided by *IDN?) |
+| Alias | A user-friendly name for the connection string as normally used in VISA |
+| Class | The class of the asset (e.g. HID device class for USB) |
+| InterfaceType | The type of interface used to connect to the asset (e.g. GPIB,LAN,PXI,USB) |
+
+Some additional properties are reserved for internal use and should not be set by the `IAssetDiscovery` implementation:
+
+| Property Display Name | Meaning |
+| --- | --- |
+| Provider | The name of the IAssetDiscovery implementation returning the asset |
+| RunnerId | The ID of the Runner/Station that discovered the asset |
+| ProviderError | An error message explaining why assets could not be discovered |
+| AutoDiscovered | A flag indicating if the asset was discovered automatically 
+
 
 ## Adding information to an asset using Metrics
 

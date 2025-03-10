@@ -434,15 +434,16 @@ to use these property Display names when applicable to provide a consistent user
 
 | Property Display Name | Meaning |
 | --- | --- |
+| AssetName | A user friendly name used in UIs to refer to the asset. |
 | AssetIdentifier | A unique identifier for the asset (required) |
 | Model | The model of the asset (e.g. as provided by *IDN?) (required) |
 | Manufacturer | The manufacturer of the asset (e.g. as provided by *IDN?) (required) |
-| VisaAddress | The VISA address of the asset (usually an instrument) |
+| Address | The address of the asset (e.g. VISA address for an instrument) |
 | SerialNumber | The serial number of the asset (e.g. as provided by *IDN?) |
 | FirmwareVersion | The firmware version of the asset (e.g. as provided by *IDN?) |
 | Alias | A user-friendly name for the connection string as normally used in VISA |
-| Class | The class of the asset |
-| InterfaceType | The type of interface used to connect to the asset (e.g. GPIB) |
+| Class | The class of the asset (e.g. HID device class for USB) |
+| InterfaceType | The type of interface used to connect to the asset (e.g. GPIB,LAN,PXI,USB) |
 
 Some additional properties are reserved for internal use and should not be set by the `IAssetDiscovery` implementation:
 

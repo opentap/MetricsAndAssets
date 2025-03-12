@@ -444,6 +444,7 @@ to use these property Display names when applicable to provide a consistent user
 | Alias | A user-friendly name for the connection string as normally used in VISA |
 | Class | The class of the asset (e.g. HID device class for USB) |
 | InterfaceType | The type of interface used to connect to the asset (e.g. GPIB,LAN,PXI,USB) |
+| LastSeen | The last time the asset was seen. This metadata is normally added automatically, but if more control is needed (e.g. the provider is returning older cached results), this property can be added. |
 
 Some additional properties are reserved for internal use and should not be set by the `IAssetDiscovery` implementation:
 

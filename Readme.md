@@ -444,12 +444,14 @@ to use these property Display names when applicable to provide a consistent user
 | Alias | A user-friendly name for the connection string as normally used in VISA |
 | Class | The class of the asset (e.g. HID device class for USB) |
 | InterfaceType | The type of interface used to connect to the asset (e.g. GPIB,LAN,PXI,USB) |
-| LastSeen | The last time the asset was seen. This metadata is normally added automatically, but if more control is needed (e.g. the provider is returning older cached results), this property can be added. |
 
-Some additional properties are reserved for internal use and should not be set by the `IAssetDiscovery` implementation:
+Some additional metadata is attached to the asset. These values does not have to be specified by the 
+`IAssetDiscoveryProvider` implementation. However, many of them can be overridden if more control is needed,
+e.g. a provider can set LastSeen to a specific time if the provider is returning older cached results.
 
 | Property Display Name | Meaning |
 | --- | --- |
+| LastSeen | The last time the asset was returned from DiscoverAssets(). |
 | Provider | The name of the IAssetDiscovery implementation returning the asset |
 | RunnerId | The ID of the Runner/Station that discovered the asset |
 | ProviderError | An error message explaining why assets could not be discovered |

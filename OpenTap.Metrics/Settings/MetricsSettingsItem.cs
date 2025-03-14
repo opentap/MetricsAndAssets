@@ -143,6 +143,10 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     [Display("Current Sources", "The sources that currently provide this metric.", Order: 6)]
     [Browsable(true)]
     public string CurrentSources => string.Join(", ", Metrics.Select(MetricSourceName));
+
+    [Display("Default", "Whether this metric is enabled by default.", Order: 7)]
+    [Browsable(true)]
+    public string EnabledByDefault => Specifier.DefaultEnabled ? "Yes" : "No";
     #endregion
 
     public IEnumerable<MetricInfo> Metrics => MetricManager.GetMetricInfos().Where(Specifier.Matches); 

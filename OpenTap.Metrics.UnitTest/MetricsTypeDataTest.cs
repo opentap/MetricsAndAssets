@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using OpenTap.Metrics.Settings;
-using System.Diagnostics;
 
 namespace OpenTap.Metrics.UnitTest;
 
@@ -19,9 +18,23 @@ public class MetricsTypeDataTest
             // This class should be instantiated by MetricManager exactly once.
             Hack = this;
         }
-        public static List<MetricInfo> Metrics { get; set; } = new();
-        public IEnumerable<MetricInfo> AdditionalMetrics => Metrics.ToArray();
+        public static List<MetricInfo> Metrics { get; set; } = [];
+        public IEnumerable<MetricInfo> AdditionalMetrics => Metrics;
     } 
+
+    public class UnnamedMetricSource : IMetricSource
+    {
+        [Metric] public int UnnamedMetric { get; set; }
+    }
+
+    [Test]
+    public void TestMetricDefaultName()
+    {
+        var specs = TypeData.GetDerivedTypes<IMetricsSettingsItem>().OfType<MetricInfoTypeData>() .Select(x => x.Specifier).ToArray();
+        // Verify that if no metric name is specified, it falls back to the member name
+        var unnamedMetric = specs.FirstOrDefault(spec => spec.Name == nameof(UnnamedMetricSource.UnnamedMetric));
+        Assert.That(unnamedMetric, Is.Not.Null);
+    }
 
     [Test]
     public void TestDiscoverAdditionalMetrics()

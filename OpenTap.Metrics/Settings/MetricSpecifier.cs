@@ -27,9 +27,8 @@ public class MetricSpecifier : IEquatable<MetricSpecifier>
     public MetricSpecifier(IMemberData x)
     {
         var attr = x.GetAttribute<MetricAttribute>();
-        var grp = string.IsNullOrWhiteSpace(attr.Group) ? null : attr.Group;
-        Name = attr.Name;
-        Group = grp;
+        Name = attr.Name ?? x.GetDisplayAttribute().Name;
+        Group = string.IsNullOrWhiteSpace(attr.Group) ? null : attr.Group;
         Type = MetricInfo.GetMemberMetricType(x);
         // Consider two metrics equal regardless of nullability
         if (Type.HasFlag(MetricType.Nullable))

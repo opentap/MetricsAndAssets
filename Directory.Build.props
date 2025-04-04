@@ -2,7 +2,7 @@
     <PropertyGroup Condition="'$(Configuration)' == ''">
         <Configuration>Debug</Configuration>
     </PropertyGroup>
-        
+
     <PropertyGroup>
         <OpenTapVersion>9.25.1</OpenTapVersion>
         <OpenTapVersion Condition="$([MSBuild]::IsOSPlatform('OSX'))">9.26.1</OpenTapVersion>
@@ -11,5 +11,9 @@
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <OutputPath>$(MSBuildThisFileDirectory)bin\$(Configuration)\</OutputPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(OS)' == 'WINDOWS_NT' AND '$(Configuration)' == 'Debug'">
+        <!-- This is a dependency only in debug builds on windows because Live Results Panels requires a newer OpenTAP version -->
+        <OpenTapVersion>9.27.1</OpenTapVersion>
     </PropertyGroup>
 </Project>

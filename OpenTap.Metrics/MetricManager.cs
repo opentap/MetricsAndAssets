@@ -270,6 +270,7 @@ public static class MetricManager
 
     private static MetricInfo CreateMetric<T>(IAdditionalMetricSources owner, string name, string groupName, MetricKind kind, Func<T> pollFunction = null)
     {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException($"Metric name must not be null or whitespace.", nameof(name));
         pollFunction ??= () => default;
         var declaring = TypeData.GetTypeData(owner);
         var descriptor = TypeData.FromType(typeof(T));

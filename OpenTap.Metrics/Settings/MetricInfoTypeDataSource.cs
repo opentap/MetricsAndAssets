@@ -17,7 +17,7 @@ class MetricInfoTypeDataSource : ITypeDataSource
         // just guess. 
 
         // 1. Find all sources
-        var allSources = TypeData.GetDerivedTypes<IMetricSource>().ToArray();
+        var allSources = MetricMemberHelpers.GetAllMetricSources().ToArray();
         // 2. Filter the sources list down to the set of sources that provide this metric
         var metricSources = allSources.Where(x => x.GetMetricSpecifiers().Any(spec =>
             spec.Equals(mtd.Specifier))).ToArray();

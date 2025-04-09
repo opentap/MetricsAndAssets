@@ -75,7 +75,7 @@ public class MetricSpecifier : IEquatable<MetricSpecifier>
     private MergedMetricInfo _mergedMetricInfo => _cache.GetOrAdd(this, static x =>
     {
         var mmi = new MergedMetricInfo();
-        var metricSpecifiers = TypeData.GetDerivedTypes<IMetricSource>().SelectMany(src => src.GetMetricMembers())
+        var metricSpecifiers = MetricMemberHelpers.GetAllMetricMembers()
             .Where(x2 => new MetricSpecifier(x2).Equals(x))
             .ToArray();
         foreach (var g in metricSpecifiers)

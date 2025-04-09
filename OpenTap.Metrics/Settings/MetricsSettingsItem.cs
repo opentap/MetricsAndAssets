@@ -169,9 +169,9 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
                 var sources = CurrentSources;
                 if (string.IsNullOrWhiteSpace(sources))
                 {
-                    var availableFrom = TypeData.GetDerivedTypes<IMetricSource>()
+                    var availableFrom = TypeData.GetDerivedTypes<IResource>()
+                        .Where(x => x.CanCreateInstance)
                         .Where(m => m.GetMetricSpecifiers().Contains(Specifier))
-                        .Where(td => td.DescendsTo(typeof(IResource)))
                         .Select(td => td.GetDisplayAttribute().GetFullName())
                         .ToArray();
                     if (availableFrom.Any())

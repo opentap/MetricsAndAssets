@@ -76,13 +76,13 @@ namespace OpenTap.Metrics.AssetDiscovery
             {
                 try
                 {
-                    base.Open();
+                    this.Open();
                     updateAssetMetricsInternal();
                 }
                 finally
                 {
                     logic.ReleaseMutex();
-                    base.Close();
+                    this.Close();
                 }
             }
         }

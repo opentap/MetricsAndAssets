@@ -24,7 +24,7 @@ namespace OpenTap.Metrics.AssetDiscovery
         #endregion
 
         private readonly AssetMetricInstrumentLogic logic;
-        protected abstract string Address { get; }
+        protected abstract string Address { get; set; }
 
         public AssetMetricInstrument()
         {
@@ -43,7 +43,7 @@ namespace OpenTap.Metrics.AssetDiscovery
             {
                 if (!logic.GetBusyMutex(Address).WaitOne(10_000))
                 {
-                    throw new Exception("Failed to connect. Another instance of OpenTAP is already connected to this inetrument.");
+                    throw new Exception("Failed to connect. Another instance of OpenTAP is already connected to this instrument.");
                 }
             }
             catch (AbandonedMutexException)

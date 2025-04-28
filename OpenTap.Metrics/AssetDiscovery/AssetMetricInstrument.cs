@@ -89,12 +89,12 @@ namespace OpenTap.Metrics.AssetDiscovery
             {
                 try
                 {
-                    LockedOpen();
+                    this.Open();
                     UpdateAssetMetrics();
                 }
                 finally
                 {
-                    LockedClose();
+                    this.Close();
                     logic.ReleaseMutex();
                 }
             }

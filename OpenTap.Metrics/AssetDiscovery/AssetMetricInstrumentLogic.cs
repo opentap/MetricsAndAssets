@@ -33,7 +33,7 @@ namespace OpenTap.Metrics.AssetDiscovery
             {
                 if (!GetBusyMutex(address).WaitOne(10_000))
                 {
-                    throw new Exception("Failed to connect. Another instance of OpenTAP is already connected to this inetrument.");
+                    throw new Exception("Failed to connect. Another instance of OpenTAP is already connected to this instrument.");
                 }
             }
             catch (AbandonedMutexException)

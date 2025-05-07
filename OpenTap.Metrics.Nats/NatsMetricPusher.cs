@@ -180,10 +180,10 @@ namespace OpenTap.Metrics.Nats
         [MetaData]
         public string StreamName => NatsMetricPusher.MetricsStreamName;
         [Metric("Usage (MB)", "Runner Metric Storage", DefaultPollRate = 15, DefaultEnabled = true)]
-        // [Unit("MB")]
+        [Unit("MB")]
         public double MetricsStreamSize { get; set; }
         [Metric("Age (Hours)", "Runner Metric Storage", DefaultPollRate = 15, DefaultEnabled = false)]
-        // [Unit("h")]
+        [Unit("h")]
         public int MetricsStreamAge { get; set; }
 
         public void OnPollMetrics(IEnumerable<MetricInfo> metrics)

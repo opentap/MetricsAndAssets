@@ -14,6 +14,11 @@
     <OpenTapPackageDefinitionPath>../package.xml</OpenTapPackageDefinitionPath>
     <CreateOpenTapPackage>true</CreateOpenTapPackage>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <OpenTapPackageReference Include="Sign" Version="$(SIGN_VERSION)" Reference="False" Repository="https://test-automation.pw.keysight.com/api/packages" Token="$(KS8500_REPO_TOKEN)" />
+    <OpenTapPackageReference Include="Keg" Version="0.1.0-beta.69+31496da2" Reference="False" />
+  </ItemGroup>
   
   <!-- Automatic assembly versioning in pipeline-->
   <PropertyGroup Condition="'$(ShortVersion)' != ''">

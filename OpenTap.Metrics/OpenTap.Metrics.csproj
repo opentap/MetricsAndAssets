@@ -9,6 +9,11 @@
     <LangVersion>12</LangVersion>
     <CreateOpenTapPackage>false</CreateOpenTapPackage> <!-- The package build is kicked off by another project that gets build later  -->
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <OpenTapPackageDefinitionPath>../package.xml</OpenTapPackageDefinitionPath>
+    <CreateOpenTapPackage>true</CreateOpenTapPackage>
+  </PropertyGroup>
   
   <!-- Automatic assembly versioning in pipeline-->
   <PropertyGroup Condition="'$(ShortVersion)' != ''">

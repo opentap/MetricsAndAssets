@@ -3,21 +3,19 @@ using System.Diagnostics;
 
 namespace OpenTap.Metrics.DefaultMetrics;
 
-[Display("Default Metric Source")]
+[Display("Default Metrics")]
 public class DefaultMetricSource : IMetricSource
 {
     private int processId = Process.GetCurrentProcess().Id;
-
     private DateTime lastMeasure = DateTime.Now;
     private double lastProcessorTime = MetricUtils.GetCPUUsageForProcessInSeconds(Process.GetCurrentProcess().Id);
-
+    private double lastCpuUsagePct = 0.0;
+    private readonly int refreshIntervalSeconds = 5;
     
     [Metric("Memory Usage",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
     [Unit("B")]
     public double MemoryUsage => MetricUtils.GetMemoryUsageForProcess(processId);
 
-    private double lastCpuUsagePct = 0.0;
-    private readonly int refreshIntervalSeconds = 5;
 
     [Unit("%cores")]
     [Metric("CPU Usage",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
@@ -25,6 +23,9 @@ public class DefaultMetricSource : IMetricSource
     {
         get
         {
+            // we monitor CPU usage for a window down to the last 5 seconds.
+            // if asked more than once every 5 seconds we will respond with the same value within that window.
+            
             var now = DateTime.UtcNow;
             var elapsedSeconds = (now - lastMeasure).TotalSeconds;
 
@@ -49,7 +50,7 @@ public class DefaultMetricSource : IMetricSource
     }
 
     [Unit("%")]
-    [Metric("Disk Usage",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
-    public double DiskUsage => MetricUtils.GetDiskUsage();
+    [Metric("Disk Utilization",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
+    public double DiskUtilization => MetricUtils.GetDiskUtilization();
 
 }

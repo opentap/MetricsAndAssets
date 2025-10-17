@@ -28,7 +28,10 @@ static class MetricUtils
         return proc.TotalProcessorTime.TotalSeconds;
     }
     
-    public static double GetDiskUsage()
+    /// <summary> Calculate the pct disk usage of the volume of the 'current directory'.
+    /// Note if its on linux or macos, this gives the disk utilization of /. Which may or may not be the same as for the
+    /// current directory. </summary>
+    public static double GetDiskUtilization()
     {
         string currentDir = Directory.GetCurrentDirectory();
         string rootPath = Path.GetPathRoot(currentDir);

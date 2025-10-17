@@ -12,13 +12,13 @@ public class DefaultMetricSource : IMetricSource
     private double lastCpuUsagePct = 0.0;
     private readonly int refreshIntervalSeconds = 5;
     
-    [Metric("Memory Usage",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
+    [Metric("Memory Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
     [Unit("B")]
     public double MemoryUsage => MetricUtils.GetMemoryUsageForProcess(processId);
 
 
     [Unit("%cores")]
-    [Metric("CPU Usage",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
+    [Metric("CPU Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
     public double CpuUsagePercent
     {
         get
@@ -50,7 +50,7 @@ public class DefaultMetricSource : IMetricSource
     }
 
     [Unit("%")]
-    [Metric("Disk Utilization",  kind: MetricKind.Poll, DefaultPollRate = 5, DefaultEnabled = true)]
+    [Metric("Disk Utilization",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
     public double DiskUtilization => MetricUtils.GetDiskUtilization();
 
 }

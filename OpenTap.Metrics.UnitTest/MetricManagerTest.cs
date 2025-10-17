@@ -338,6 +338,20 @@ public class MetricManagerTest
     }
 
     [Test]
+    public void TestPollDefaultMetrics()
+    {
+        var interestSet = MetricManager.GetMetricInfos()
+            .Where(info => info.GroupName == "Default Metric Source").ToArray();
+        var metrics = MetricManager.PollMetrics(interestSet, true).ToDictionary(info => info.Info.Name);
+        var cpuUsage = metrics["CPU Usage"];
+        var memoryUsage = metrics["Memory Usage"];
+        var diskUsage = metrics["Disk Usage"];
+        Assert.IsTrue((double)cpuUsage.Value >= 0.0);
+        Assert.IsTrue((double)memoryUsage.Value > 1_000_000);
+        Assert.IsTrue((double)diskUsage.Value >= 0.0);
+    }
+
+    [Test]
     public void TestGetMetrics()
     {
         MetricManager.Reset();

@@ -13,9 +13,9 @@ public class DefaultMetricSource : IMetricSource
     private readonly int refreshIntervalSeconds = 5;
     
     [Metric("Memory Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
-    [Unit("B")]
-    public double MemoryUsage => MetricUtils.GetMemoryUsageForProcess(processId);
-
+    [Unit("MB")]
+    public double MemoryUsage => Math.Round(MetricUtils.GetMemoryUsageForProcess(processId) / 1_000_000.0, 2);
+    
 
     [Unit("%cores")]
     [Metric("CPU Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
@@ -26,7 +26,7 @@ public class DefaultMetricSource : IMetricSource
             // we monitor CPU usage for a window down to the last 5 seconds.
             // if asked more than once every 5 seconds we will respond with the same value within that window.
             
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var elapsedSeconds = (now - lastMeasure).TotalSeconds;
 
             // reuse if still within 5 seconds
@@ -43,14 +43,18 @@ public class DefaultMetricSource : IMetricSource
             // update stored values
             lastProcessorTime = currentProcessorTime;
             lastMeasure = now;
-            lastCpuUsagePct = Math.Max(0, Math.Min(100, cpuUsage)); // clamp to [0, 100]
+            lastCpuUsagePct = Math.Max(0, Math.Min(100, Math.Round(cpuUsage, 2))); // clamp to [0, 100]
 
             return lastCpuUsagePct;
         }
     }
 
-    [Unit("%")]
-    [Metric("Disk Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
-    public double DiskUsage => MetricUtils.GetDiskUsage();
+    [Unit("GB")]
+    [Metric("Available Disk Space",  kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = true)]
+    public double DiskAvailableSpace => Math.Round(MetricUtils.GetAvailableDiskSpace() / 1_000_000_000, 2);
+    
+    [Unit("GB")]
+    [Metric("Used Disk Space",  kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = false)]
+    public double DiskUsedSpace => Math.Round(MetricUtils.GetUsedDiskSpace() / 1_000_000_000, 2);
 
 }

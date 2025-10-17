@@ -345,10 +345,12 @@ public class MetricManagerTest
         var metrics = MetricManager.PollMetrics(interestSet, true).ToDictionary(info => info.Info.Name);
         var cpuUsage = metrics["CPU Usage"];
         var memoryUsage = metrics["Memory Usage"];
-        var diskUsage = metrics["Disk Usage"];
+        var availableDiskSpace = metrics["Available Disk Space"];
+        var usedDiskSpace = metrics["Used Disk Space"];
         Assert.That((double)cpuUsage.Value, Is.GreaterThanOrEqualTo(0.0));
         Assert.That((double)memoryUsage.Value, Is.GreaterThan(1_000_000));
-        Assert.That((double)diskUsage.Value, Is.GreaterThanOrEqualTo(0.0));
+        Assert.That((double)availableDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
+        Assert.That((double)usedDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
     }
 
     [Test]

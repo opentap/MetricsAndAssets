@@ -31,14 +31,21 @@ static class MetricUtils
     /// <summary> Calculate the pct disk usage of the volume of the 'current directory'.
     /// Note if its on linux or macos, this gives the disk utilization of /. Which may or may not be the same as for the
     /// current directory. </summary>
-    public static double GetDiskUsage()
+    public static double GetAvailableDiskSpace()
+    {
+        string currentDir = Directory.GetCurrentDirectory();
+        string rootPath = Path.GetPathRoot(currentDir);
+        var drive = new DriveInfo(rootPath);
+        return drive.AvailableFreeSpace;
+        
+    }
+    
+    public static double GetUsedDiskSpace()
     {
         string currentDir = Directory.GetCurrentDirectory();
         string rootPath = Path.GetPathRoot(currentDir);
         var drive = new DriveInfo(rootPath);
         
-        double percent = ((double)drive.AvailableFreeSpace / drive.TotalSize) * 100.0;
-        return Math.Max(0, Math.Min(100, percent));
+        return drive.TotalSize - drive.AvailableFreeSpace;
     }
-
 }

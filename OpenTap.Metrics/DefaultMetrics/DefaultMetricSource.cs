@@ -50,7 +50,7 @@ public class DefaultMetricSource : IMetricSource
     }
 
     [Unit("%")]
-    [Metric("Disk Utilization",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
-    public double DiskUtilization => MetricUtils.GetDiskUtilization();
+    [Metric("Disk Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
+    public double DiskUsage => MetricUtils.GetDiskUsage();
 
 }

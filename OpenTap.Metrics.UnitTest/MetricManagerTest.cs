@@ -341,7 +341,7 @@ public class MetricManagerTest
     public void TestPollDefaultMetrics()
     {
         var interestSet = MetricManager.GetMetricInfos()
-            .Where(info => info.GroupName == "Default Metric Source").ToArray();
+            .Where(info => info.GroupName == "Default Metrics").ToArray();
         var metrics = MetricManager.PollMetrics(interestSet, true).ToDictionary(info => info.Info.Name);
         var cpuUsage = metrics["CPU Usage"];
         var memoryUsage = metrics["Memory Usage"];

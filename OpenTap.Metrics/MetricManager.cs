@@ -191,11 +191,15 @@ public static class MetricManager
     static readonly TraceSource log = Log.CreateSource(nameof(MetricManager));
 
     /// <summary> Poll metrics. </summary>
-    public static IEnumerable<IMetric> PollMetrics(IEnumerable<MetricInfo> interestSet)
+    public static IEnumerable<IMetric> PollMetrics(IEnumerable<MetricInfo> interestSet) =>
+        PollMetrics(interestSet, false);
+    
+    /// <summary> Poll metrics. </summary>
+    internal static IEnumerable<IMetric> PollMetrics(IEnumerable<MetricInfo> interestSet, bool throws)
     {
         var interest = interestSet.Where(i => i.Kind.HasFlag(MetricKind.Poll)).ToHashSet();
         Dictionary<object, Dictionary<string, string>> metadataLookup = new();
-
+        
         foreach (var source in interest.GroupBy(i => i.Source))
         {
             if (source.Key is IOnPollMetricsCallback producer)
@@ -207,6 +211,8 @@ public static class MetricManager
                 catch (Exception ex)
                 {
                     log.Warning($"Unhandled exception in OnPollMetrics in '{producer}': '{ex.Message}'");
+                    if (throws)
+                        throw;
                 }
             }
 
@@ -240,7 +246,10 @@ public static class MetricManager
                     yield return new EmptyMetric(metric, metadata);
                     break;
                 default:
-                    log.ErrorOnce(metric, "Metric value is not a supported type: {0} of type {1}", metric.Name, metricValue?.GetType().Name ?? "null");
+                    var msg = $"Metric value is not a supported type: {metric.Name} of type {(metricValue?.GetType().Name ?? "null")}";
+                    if (throws)
+                        throw new Exception(msg);
+                    log.ErrorOnce(metric, msg);
                     break;
             }
         }

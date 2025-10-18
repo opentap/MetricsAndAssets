@@ -15,7 +15,7 @@ public class DynamicMetricTests
     public class DynamicMetricProvider : Instrument, IAdditionalMetricSources, IOnPollMetricsCallback
     {
         const string Group = "Dynamic Metric Test";
-        IEnumerable<MetricInfo> IAdditionalMetricSources.AdditionalMetrics => new[] { PollMetric, PushMetric };
+        IEnumerable<MetricInfo> IAdditionalMetricSources.AdditionalMetrics => [PollMetric, PushMetric];
         public MetricInfo PollMetric { get; }
         public MetricInfo PushMetric { get; }
 
@@ -42,7 +42,7 @@ public class DynamicMetricTests
     public class DynamicNullableMetricProvider : Instrument, IAdditionalMetricSources, IOnPollMetricsCallback
     {
         const string Group = "Dynamic Nullable Metric Test";
-        IEnumerable<MetricInfo> IAdditionalMetricSources.AdditionalMetrics => new[] { PollMetric, PushMetric };
+        IEnumerable<MetricInfo> IAdditionalMetricSources.AdditionalMetrics => [PollMetric, PushMetric];
         public MetricInfo PollMetric { get; }
         public MetricInfo PushMetric { get; }
         public double? Counter { get; private set; } = 0;
@@ -98,7 +98,7 @@ public class DynamicMetricTests
         MetricManager.OnMetricCreated += onNewMetric;
         var created = MetricManager.CreatePushMetric<double>(provider, "test", "group");
         Assert.IsNotNull(created);
-        Assert.AreEqual(created, result);
+        Assert.That(result, Is.EqualTo(created));
     }
 
     [Test]
@@ -109,21 +109,21 @@ public class DynamicMetricTests
         var dyn = new DynamicMetricProvider();
         InstrumentSettings.Current.Add(dyn);
         var listener = new DynamicMetricListener();
-        MetricManager.Subscribe(listener, new[] { dyn.PushMetric });
-        Assert.AreEqual(null, listener.LastMetric);
+        MetricManager.Subscribe(listener, [dyn.PushMetric]);
+        Assert.That(listener.LastMetric, Is.EqualTo(null));
 
         for (double i = 0; i < 10; i++)
         {
             dyn.PushDouble(i);
-            Assert.AreEqual(i, listener.LastMetric);
+            Assert.That(listener.LastMetric, Is.EqualTo(i));
         }
 
         for (double i = 1; i < 10; i++)
         {
             // DynamicMetricProvider is incrementing Counter whenever it is polled
-            IMetric m = MetricManager.PollMetrics(new[] { dyn.PollMetric }).First();
-            Assert.AreEqual(i, m.Value);
-            Assert.AreEqual(i, dyn.Counter);
+            IMetric m = MetricManager.PollMetrics([dyn.PollMetric]).First();
+            Assert.That(m.Value, Is.EqualTo(i));
+            Assert.That(dyn.Counter, Is.EqualTo(i));
         }
     }
 
@@ -153,7 +153,7 @@ public class DynamicMetricTests
         var provider = new DynamicNullableMetricProvider();
         InstrumentSettings.Current.Add(provider);
         var listener = new DynamicMetricListener();
-        MetricManager.Subscribe(listener, new[] { provider.PushMetric });
+        MetricManager.Subscribe(listener, [provider.PushMetric]);
         Assert.That(listener.LastMetric, Is.Null);
 
         for (double i = 0; i < 10; i++)
@@ -165,7 +165,7 @@ public class DynamicMetricTests
         for (double i = 1; i < 10; i++)
         {
             // DynamicNullableMetricProvider is incrementing Counter whenever it is polled
-            IMetric m = MetricManager.PollMetrics(new[] { provider.PollMetric }).First();
+            IMetric m = MetricManager.PollMetrics([provider.PollMetric]).First();
             Assert.That(m.Value, Is.EqualTo(i));
             Assert.That(provider.Counter, Is.EqualTo(i));
         }

@@ -15,7 +15,23 @@ public class DefaultMetricSource : IMetricSource
     [Metric("Memory Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
     [Unit("MB")]
     public double MemoryUsage => Math.Round(MetricUtils.GetMemoryUsageForProcess(processId) / 1_000_000.0, 2);
-    
+
+    // this metric is only easily available on .net9
+    [Metric("Available Memory", kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
+    [Unit("MB")]
+    public double? AvailableMemory
+    {
+        get
+        {
+            var mem = MemoryHelper.TryGetTotalAvailableMemoryBytes();
+            if (mem is ulong m)
+            {
+                return Math.Round(m / 1_000_000.0, 2);
+            }
+            return null;
+        }   
+    }
+
 
     [Unit("%cores")]
     [Metric("CPU Usage",  kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]

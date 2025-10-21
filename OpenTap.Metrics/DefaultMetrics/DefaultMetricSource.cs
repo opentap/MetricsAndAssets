@@ -24,7 +24,7 @@ public class DefaultMetricSource : IMetricSource
         get
         {
             // on other platforms than .net9, this just returns null.
-            var mem = MemoryHelper.TryGetTotalAvailableMemoryBytes();
+            var mem = MemoryHelper.GetTotalFreeMemory();
             if (mem is ulong m)
                 return Math.Round(m / 1_000_000.0, 2);
             return null;

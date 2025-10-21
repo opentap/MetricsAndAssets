@@ -7,9 +7,9 @@ namespace OpenTap.Metrics.DefaultMetrics;
 using System;
 using System.Runtime.InteropServices;
 
-public static class MemoryInfo
+public static class MemoryHelper
 {
-    public static ulong GetTotalFreeMemory()
+    public static ulong? GetTotalFreeMemory()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return GetFreeMemoryWindows();
@@ -17,8 +17,8 @@ public static class MemoryInfo
             return GetFreeMemoryLinux();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return GetFreeMemoryMac();
-        
-        throw new PlatformNotSupportedException("Unsupported OS platform");
+
+        return null;
     }
 
     // --- Windows ---
@@ -56,7 +56,7 @@ public static class MemoryInfo
         {
             if (line.StartsWith("MemAvailable:"))
             {
-                string value = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
+                string value = line.Split([' '], StringSplitOptions.RemoveEmptyEntries)[1];
                 memAvailableKb = ulong.Parse(value);
                 break;
             }

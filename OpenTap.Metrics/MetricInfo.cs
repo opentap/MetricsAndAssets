@@ -19,6 +19,10 @@ public class MetricInfo
     /// <summary> The name of the metric. </summary>
     [Display("Name", "The name of this metric.", Order: 2), Browsable(true)]
     public string Name { get; }
+    
+    /// <summary> The description of the metric. This may be null. </summary>
+    [Display("Description", "The description of this metric.", Order: 2), Browsable(true)]
+    public string Description { get; }
 
     /// <summary> The type of this metric. </summary>
     [Browsable(true)]
@@ -76,6 +80,7 @@ public class MetricInfo
         IsAvailable = true;
         DefaultPollRate = metricAttr?.DefaultPollRate ?? 0;
         DefaultEnabled = metricAttr?.DefaultEnabled ?? false;
+        Description = metricAttr?.Description;
     }
 
     /// <summary> Creates a new metric info based on custom data. </summary>

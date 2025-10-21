@@ -4,63 +4,119 @@ using System.Reflection;
 
 namespace OpenTap.Metrics.DefaultMetrics;
 
-public static class MemoryHelper
+using System;
+using System.Runtime.InteropServices;
+
+public static class MemoryInfo
 {
-    // Cached reflection info
-    private static readonly MethodInfo? s_getInfoMethod;
-    private static readonly PropertyInfo? s_totalAvailableProp;
-    private static readonly bool s_isSupported;
-
-    static MemoryHelper()
+    public static ulong GetTotalFreeMemory()
     {
-        try
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return GetFreeMemoryWindows();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return GetFreeMemoryLinux();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return GetFreeMemoryMac();
+        
+        throw new PlatformNotSupportedException("Unsupported OS platform");
+    }
+
+    // --- Windows ---
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private class MEMORYSTATUSEX
+    {
+        public uint dwLength = (uint)Marshal.SizeOf(typeof(MEMORYSTATUSEX));
+        public uint dwMemoryLoad;
+        public ulong ullTotalPhys;
+        public ulong ullAvailPhys;
+        public ulong ullTotalPageFile;
+        public ulong ullAvailPageFile;
+        public ulong ullTotalVirtual;
+        public ulong ullAvailVirtual;
+        public ulong ullAvailExtendedVirtual;
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
+
+    private static ulong GetFreeMemoryWindows()
+    {
+        var memStatus = new MEMORYSTATUSEX();
+        if (GlobalMemoryStatusEx(memStatus))
+            return memStatus.ullAvailPhys;
+        throw new InvalidOperationException("Unable to get memory info on Windows");
+    }
+
+    // --- Linux ---
+    private static ulong GetFreeMemoryLinux()
+    {
+        string[] lines = System.IO.File.ReadAllLines("/proc/meminfo");
+        ulong memAvailableKb = 0;
+        foreach (var line in lines)
         {
-            // Try to locate GC.GetGCMemoryInfo()
-            s_getInfoMethod = typeof(GC).GetMethods( BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(x => x.Name == "GetGCMemoryInfo"&& x.GetParameters().Length == 0);
-
-            if (s_getInfoMethod != null)
+            if (line.StartsWith("MemAvailable:"))
             {
-                // Create an instance so we can find its property
-                var infoType = s_getInfoMethod.ReturnType;
-                s_totalAvailableProp = infoType.GetProperty(
-                    "TotalAvailableMemoryBytes",
-                    BindingFlags.Public | BindingFlags.Instance);
-
-                s_isSupported = s_totalAvailableProp != null;
+                string value = line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1];
+                memAvailableKb = ulong.Parse(value);
+                break;
             }
         }
-        catch
-        {
-            s_isSupported = false;
-        }
+        return memAvailableKb * 1024; // convert to bytes
     }
 
-    /// <summary>
-    /// Gets the GC's total available memory in bytes using reflection.
-    /// Returns null if the API isn't supported on this runtime - only supported on .net 9.
-    /// </summary>
-    public static ulong? TryGetTotalAvailableMemoryBytes()
+    // --- macOS ---
+    private static ulong GetFreeMemoryMac()
     {
-         if (!s_isSupported || s_getInfoMethod == null || s_totalAvailableProp == null)
-            return null;
+        var vmStats = new VmStatistics64();
+        int count = Marshal.SizeOf(vmStats) / sizeof(int);
+        int result = host_statistics64(mach_host_self(), HOST_VM_INFO64, ref vmStats, ref count);
+        if (result != 0)
+            throw new InvalidOperationException("Unable to get memory info on macOS");
+        
+        ulong pageSize;
+        host_page_size(mach_host_self(), out pageSize);
 
-        try
-        {
-            var info = s_getInfoMethod.Invoke(null, null);
-            if (info == null)
-                return null;
-
-            var value = s_totalAvailableProp.GetValue(info);
-            if (value == null)
-                return null;
-
-            // Convert.ChangeType handles boxed numeric conversions
-            return Convert.ToUInt64(value);
-        }
-        catch
-        {
-            return null;
-        }
+        ulong freeMem = (vmStats.free_count + vmStats.inactive_count) * pageSize;
+        return freeMem;
     }
+
+    private const int HOST_VM_INFO64 = 4;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct VmStatistics64
+    {
+        public uint free_count;
+        public uint active_count;
+        public uint inactive_count;
+        public uint wire_count;
+        public ulong zero_fill_count;
+        public ulong reactivations;
+        public ulong pageins;
+        public ulong pageouts;
+        public ulong faults;
+        public ulong cow_faults;
+        public ulong lookups;
+        public ulong hits;
+        public ulong purges;
+        public uint purgeable_count;
+        public uint speculative_count;
+        public ulong decompressions;
+        public ulong compressions;
+        public ulong swapins;
+        public ulong swapouts;
+        public uint compressor_page_count;
+        public uint throttled_count;
+        public uint external_page_count;
+        public uint internal_page_count;
+        public uint total_uncompressed_pages_in_compressor;
+    }
+
+    [DllImport("libSystem.dylib")]
+    private static extern int host_statistics64(IntPtr host, int flavor, ref VmStatistics64 stat, ref int count);
+
+    [DllImport("libSystem.dylib")]
+    private static extern IntPtr mach_host_self();
+
+    [DllImport("libSystem.dylib")]
+    private static extern int host_page_size(IntPtr host, out ulong pageSize);
 }

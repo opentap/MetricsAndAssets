@@ -34,6 +34,9 @@ public class MetricAttribute : Attribute
     /// This is a hint to the client. A UI is free to ignore this hint.
     /// </summary>
     public bool DefaultEnabled { get; set; } = false;
+    
+    /// <summary> Optional description of the metric. This may be null.</summary>
+    public string Description { get; set; }
 
     /// <summary> Creates a new instance of the metric attribute </summary>
     ///  <param name="name">Optionally, the name of the metric.</param>
@@ -44,6 +47,19 @@ public class MetricAttribute : Attribute
         Name = name;
         Group = group;
         Kind = kind;
+    }
+
+    /// <summary> Creates a new instance of the metric attribute </summary>
+    ///  <param name="name">Optionally, the name of the metric.</param>
+    ///  <param name="group">The group of the metric.</param>
+    ///  <param name="kind"> The push / poll semantics of the metric. </param>
+    /// <param name="description">The description of the metric.</param>
+    public MetricAttribute(string name, string group, string description, MetricKind kind = MetricKind.Poll)
+    {
+        Name = name;
+        Group = group;
+        Kind = kind;
+        Description = description;
     }
 
     /// <summary> Creates a new instance of the metric attribute.</summary>

@@ -341,7 +341,7 @@ public class MetricManagerTest
     public void TestPollDefaultMetrics()
     {
         var interestSet = MetricManager.GetMetricInfos()
-            .Where(info => info.GroupName == "Default Metrics").ToArray();
+            .Where(info => info.GroupName == "System" || info.GroupName == "Process").ToArray();
         var metrics = MetricManager.PollMetrics(interestSet, true).ToDictionary(info => info.Info.Name);
         var cpuUsage = metrics["CPU Usage"];
         var memoryUsage = metrics["Memory Usage"];
@@ -354,6 +354,8 @@ public class MetricManagerTest
         Assert.That((double)usedDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
         if(availableMemory.Value != null)
             Assert.That((double)availableMemory.Value, Is.GreaterThan(1));
+        Assert.That(cpuUsage.Info.Description, Contains.Substring("The CPU usage"));
+        Assert.That(cpuUsage.Info.GroupName, Is.EqualTo("Process"));
     }
 
     [Test]

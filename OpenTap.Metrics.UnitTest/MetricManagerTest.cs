@@ -352,8 +352,7 @@ public class MetricManagerTest
         Assert.That((double)memoryUsage.Value, Is.GreaterThan(1));
         Assert.That((double)availableDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
         Assert.That((double)usedDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
-        if(availableMemory.Value != null)
-            Assert.That((double)availableMemory.Value, Is.GreaterThan(1));
+        Assert.That((double)availableMemory.Value, Is.GreaterThan(1));
         Assert.That(cpuUsage.Info.Description, Contains.Substring("The CPU usage"));
         Assert.That(cpuUsage.Info.GroupName, Is.EqualTo("Process"));
     }

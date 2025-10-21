@@ -16,14 +16,12 @@ public class DefaultMetricSource : IMetricSource
     [Unit("MB")]
     public double MemoryUsage => Math.Round(MetricUtils.GetMemoryUsageForProcess(processId) / 1_000_000.0, 2);
 
-    // this metric is only easily available on .net9
     [Metric("Available Memory", "System", "The available memory on the system.", kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
     [Unit("MB")]
     public double? AvailableMemory
     {
         get
         {
-            // on other platforms than .net9, this just returns null.
             var mem = MemoryHelper.GetTotalFreeMemory();
             if (mem is ulong m)
                 return Math.Round(m / 1_000_000.0, 2);

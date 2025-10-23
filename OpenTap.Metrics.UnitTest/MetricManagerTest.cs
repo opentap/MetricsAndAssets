@@ -110,8 +110,8 @@ public class MetricManagerTest
 
             var metricMap = metrics.ToHashSet();
 
-            Assert.IsTrue(metricMap.Contains(metricV));
-            Assert.IsTrue(metricMap.Contains(currentV));
+            Assert.That(metricMap.Contains(metricV), Is.True);
+            Assert.That(metricMap.Contains(currentV), Is.True);
             Assert.IsFalse(metricMap.Contains(idV));
 
             Voltage = Math.Sin(sw.Elapsed.TotalSeconds * 100.0) + 2.5;
@@ -149,7 +149,7 @@ public class MetricManagerTest
             MetricValues.Clear();
         }
 
-        public readonly List<IMetric> MetricValues = new List<IMetric>();
+        public readonly List<IMetric> MetricValues = [];
 
         public void OnPushMetric(IMetric table)
         {
@@ -172,9 +172,9 @@ public class MetricManagerTest
         Assert.IsNotNull(testMetric);
         var range = testMetric.Attributes.OfType<RangeAttribute>().FirstOrDefault();
         Assert.IsNotNull(range);
-        Assert.IsTrue(range.Minimum == 0.0);
+        Assert.That(range.Minimum == 0.0, Is.True);
 
-        Assert.IsTrue(metrics.Any(m => m.MetricFullName == "INST \\ v"));
+        Assert.That(metrics.Any(m => m.MetricFullName == "INST \\ v"), Is.True);
 
         Assert.Contains("Test Metric Producer \\ Y", metrics.Select(m => m.MetricFullName).ToArray());
         InstrumentSettings.Current.Remove(instrTest);
@@ -251,7 +251,7 @@ public class MetricManagerTest
         MetricManager.Subscribe(listener, allMetrics);
 
         var returned = MetricManager.PollMetrics(allMetrics).ToArray();
-        Assert.AreEqual(returned.Length, allMetrics.Length);
+        Assert.That(allMetrics.Length, Is.EqualTo(returned.Length));
 
         {
             var listener2 = new TestMetricsListener();
@@ -260,23 +260,23 @@ public class MetricManagerTest
             // Verify that all metrics are currently of interest
             foreach (var m in allMetrics)
             {
-                Assert.IsTrue(MetricManager.HasInterest(m));
+                Assert.That(MetricManager.HasInterest(m), Is.True);
             }
 
-            MetricManager.Subscribe(listener, Array.Empty<MetricInfo>());
+            MetricManager.Subscribe(listener, []);
 
             // Verify that all metrics are still of interest
             foreach (var m in allMetrics)
             {
-                Assert.IsTrue(MetricManager.HasInterest(m));
+                Assert.That(MetricManager.HasInterest(m), Is.True);
             }
 
-            MetricManager.Subscribe(listener2, Array.Empty<MetricInfo>());
+            MetricManager.Subscribe(listener2, []);
 
             // Verify that no metrics are of interest
             foreach (var m in allMetrics)
             {
-                Assert.IsFalse(MetricManager.HasInterest(m));
+                Assert.That(MetricManager.HasInterest(m), Is.False);
             }
         }
 
@@ -292,7 +292,7 @@ public class MetricManagerTest
             var managerInfo = MetricManager.GetMetricInfos().Where(m =>
                 currentMetricInfo.GetHashCode().Equals(m.GetHashCode()) &&
                 currentMetricInfo.Equals(m)).ToArray();
-            Assert.AreEqual(1, managerInfo.Length);
+            Assert.That(managerInfo.Length, Is.EqualTo(1));
         }
     }
 
@@ -325,16 +325,36 @@ public class MetricManagerTest
         MetricInfo[] a1 = left.OrderBy(m => m.GetHashCode()).ToArray();
         MetricInfo[] a2 = right.OrderBy(m => m.GetHashCode()).ToArray();
 
-        Assert.AreEqual(a1.Length, a2.Length);
+        Assert.That(a2.Length, Is.EqualTo(a1.Length));
 
         for (int i = 0; i < a1.Length; i++)
         {
             var m1 = a1[i];
             var m2 = a2[i];
 
-            Assert.AreEqual(m1.GetHashCode(), m2.GetHashCode());
-            Assert.AreEqual(m1, m2);
+            Assert.That(m2.GetHashCode(), Is.EqualTo(m1.GetHashCode()));
+            Assert.That(m2, Is.EqualTo(m1));
         }
+    }
+
+    [Test]
+    public void TestPollDefaultMetrics()
+    {
+        var interestSet = MetricManager.GetMetricInfos()
+            .Where(info => info.GroupName == "System" || info.GroupName == "Process").ToArray();
+        var metrics = MetricManager.PollMetrics(interestSet, true).ToDictionary(info => info.Info.Name);
+        var cpuUsage = metrics["CPU Usage"];
+        var memoryUsage = metrics["Memory Usage"];
+        var availableMemory = metrics["Available Memory"];
+        var availableDiskSpace = metrics["Available Disk Space"];
+        var usedDiskSpace = metrics["Used Disk Space"];
+        Assert.That((double)cpuUsage.Value, Is.GreaterThanOrEqualTo(0.0));
+        Assert.That((double)memoryUsage.Value, Is.GreaterThan(1));
+        Assert.That((double)availableDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
+        Assert.That((double)usedDiskSpace.Value, Is.GreaterThanOrEqualTo(0.0));
+        Assert.That((double)availableMemory.Value, Is.GreaterThan(1));
+        Assert.That(cpuUsage.Info.Description, Contains.Substring("The CPU usage"));
+        Assert.That(cpuUsage.Info.GroupName, Is.EqualTo("Process"));
     }
 
     [Test]
@@ -353,22 +373,22 @@ public class MetricManagerTest
         MetricManager.Subscribe(listener, interestSet);
 
         var metrics = MetricManager.PollMetrics(interestSet);
-        Assert.AreEqual(metrics.Count(), interestSet.Count(m => m.Kind.HasFlag(MetricKind.Poll)));
+        Assert.That(interestSet.Count(m => m.Kind.HasFlag(MetricKind.Poll)), Is.EqualTo(metrics.Count()));
 
 
         instrTest.PushRangeValues();
 
         var results0 = listener.MetricValues.ToArray();
-        Assert.AreEqual(10, results0.Length);
+        Assert.That(results0.Length, Is.EqualTo(10));
 
         listener.Clear();
         interestSet.RemoveAll(x => x.Name == "Test");
         MetricManager.Subscribe(listener, interestSet);
         metrics = MetricManager.PollMetrics(interestSet);
-        Assert.AreEqual(metrics.Count(), interestSet.Count(m => m.Kind.HasFlag(MetricKind.Poll)));
+        Assert.That(interestSet.Count(m => m.Kind.HasFlag(MetricKind.Poll)), Is.EqualTo(metrics.Count()));
         instrTest.PushRangeValues();
         var results2 = listener.MetricValues.ToArray();
-        Assert.AreEqual(0, results2.Length);
+        Assert.That(results2.Length, Is.EqualTo(0));
     }
 
     [TestCase(true, true)]
@@ -426,7 +446,7 @@ public class MetricManagerTest
 
             try
             {
-                var parts = this.IdnString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                var parts = this.IdnString.Split([','], StringSplitOptions.RemoveEmptyEntries);
                 this.AssetIdentifier = parts[0] + parts[1] + parts[2];
                 this.Model = parts[1];
                 this.CalibrationDate = DateTime.Parse(ScpiQuery("CALibrationdate?"));

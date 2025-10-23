@@ -38,7 +38,7 @@ public readonly struct DoubleMetric : IMetric
     /// <summary> Returns a string representation of the double metric. </summary>
     public override string ToString()
     {
-        return $"{Info.MetricFullName}: {Value} at {Time}";
+        return $"{Info.MetricFullName}: {Value}{(string.IsNullOrWhiteSpace(Info.Unit) ? "" : " " + Info.Unit)} at {Time}";
     }
 
     object IMetric.Value => Value;

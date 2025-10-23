@@ -11,12 +11,12 @@ public class DefaultMetricSource : IMetricSource
     private double lastProcessorTime = MetricUtils.GetCPUUsageForProcessInSeconds(Process.GetCurrentProcess().Id);
     private double lastCpuUsagePct = 0.0;
     private readonly int refreshIntervalSeconds = 5;
-    
-    [Metric("Memory Usage", "Process", "The memory usage of the process.", kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
+
+    [Metric("Memory Usage", "Process", "The memory usage of the process.", kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = true)]
     [Unit("MB")]
     public double MemoryUsage => Math.Round(MetricUtils.GetMemoryUsageForProcess(processId) / 1_000_000.0, 2);
 
-    [Metric("Available Memory", "System", "The available memory on the system.", kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
+    [Metric("Available Memory", "System", "The available memory on the system.", kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = true)]
     [Unit("MB")]
     public double? AvailableMemory
     {
@@ -26,19 +26,19 @@ public class DefaultMetricSource : IMetricSource
             if (mem is ulong m)
                 return Math.Round(m / 1_000_000.0, 2);
             return null;
-        }   
+        }
     }
 
 
     [Unit("%cores")]
-    [Metric("CPU Usage", "Process", "The CPU usage of the process measured in % of one core.",   kind: MetricKind.Poll, DefaultPollRate = 10, DefaultEnabled = true)]
+    [Metric("CPU Usage", "Process", "The CPU usage of the process measured in % of one core.", kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = true)]
     public double CpuUsagePercent
     {
         get
         {
             // we monitor CPU usage for a window down to the last 5 seconds.
             // if asked more than once every 5 seconds we will respond with the same value within that window.
-            
+
             var now = DateTime.Now;
             var elapsedSeconds = (now - lastMeasure).TotalSeconds;
 
@@ -63,11 +63,11 @@ public class DefaultMetricSource : IMetricSource
     }
 
     [Unit("GB")]
-    [Metric("Available Disk Space", "System", "The available disk space of the volume seen by the current process.",  kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = true)]
+    [Metric("Available Disk Space", "System", "The available disk space of the volume seen by the current process.", kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = true)]
     public double DiskAvailableSpace => Math.Round(MetricUtils.GetAvailableDiskSpace() / 1_000_000_000, 2);
-    
+
     [Unit("GB")]
-    [Metric("Used Disk Space", "System", "The used disk space of the volume seen by the current process.",  kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = false)]
+    [Metric("Used Disk Space", "System", "The used disk space of the volume seen by the current process.", kind: MetricKind.Poll, DefaultPollRate = 60, DefaultEnabled = false)]
     public double DiskUsedSpace => Math.Round(MetricUtils.GetUsedDiskSpace() / 1_000_000_000, 2);
 
 }

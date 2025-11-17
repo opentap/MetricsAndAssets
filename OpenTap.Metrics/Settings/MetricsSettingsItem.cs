@@ -51,18 +51,18 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     {
         // Ideally there should only be one Default Poll Rate, but we can't really control this since different plugins may not agree.
         List<int> pollRates = [5, 10, 30, 60, 300, 900, 1800, 3600, 7200, 86400];
-        pollRates.AddRange(_specifier.DefaultPollRates);
+        pollRates.AddRange(Specifier.DefaultPollRates);
         if (PollRate != 0) pollRates.Add(PollRate);
         pollRates = pollRates.Distinct().ToList();
         pollRates.Sort(); 
 
-        AvailablePollRates = pollRates;
-        AvailablePollRateStrings = pollRates.Select(x => pollRateReadable(x, _specifier.DefaultPollRates.Contains(x))).ToArray();
+        availablePollRates = pollRates;
+        availablePollRateStrings = pollRates.Select(x => pollRateReadable(x, Specifier.DefaultPollRates.Contains(x))).ToArray();
         {
             var idx = AvailablePollRates.IndexOf(PollRate);
             // This is possible if the default poll rate of a metric was previously selected, but the default poll rate has changed.
             if (idx == -1) PollRate = 0;
-            if (PollRate == 0) PollRate = _specifier.DefaultPollRates.FirstOrDefault();
+            if (PollRate == 0) PollRate = Specifier.DefaultPollRates.FirstOrDefault();
             if (PollRate == 0) PollRate = 300;
             idx = AvailablePollRates.IndexOf(PollRate);
             _pollRateString = AvailablePollRateStrings[idx];
@@ -76,15 +76,8 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
     
     [Browsable(false)]
     [DeserializeOrder(2)]
-    public MetricSpecifier Specifier
-    {
-        get => _specifier;
-        set
-        {
-            _specifier = value;
-            InitPollRates(); 
-        }
-    } 
+    public MetricSpecifier Specifier { get; set; } = new();
+
     #endregion
     #region Displayed Settings 
     [Browsable(false)] public bool CanPoll => Specifier.Kind.HasFlag(MetricKind.Poll); 
@@ -104,18 +97,33 @@ public class MetricsSettingsItem : ValidatingObject, IMetricsSettingsItem
    
     /// <summary> Whether this metric can be polled or will be published out of band. </summary>
     [Display("Kind", "The kind of this metric.", Order: 4), Browsable(true)]
-    public MetricKind Kind => Specifier.Kind; 
+    public MetricKind Kind => Specifier.Kind;
 
-    [Browsable(false)]
-    [XmlIgnore]
-    public List<int> AvailablePollRates { get; private set; } 
+    private List<int> availablePollRates;
+    public List<int> AvailablePollRates
+    {
+        get
+        {
+            if (availablePollRates == null)
+                InitPollRates();
 
-    [Browsable(false)]
-    [XmlIgnore]
-    public string[] AvailablePollRateStrings { get; private set; }
+            return availablePollRates;
+        }
+    }
+
+    public string[] AvailablePollRateStrings
+    {
+        get
+        {
+            if (availablePollRateStrings == null)
+                InitPollRates();
+
+            return availablePollRateStrings;
+        }
+    }
 
     private string _pollRateString;
-    private MetricSpecifier _specifier = new();
+    private string[] availablePollRateStrings;
 
     [Display("Poll Rate", "The poll rate of this metric.", Order: 5)]
     [AvailableValues(nameof(AvailablePollRateStrings))]

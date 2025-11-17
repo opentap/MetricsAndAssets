@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
 using OpenTap.Metrics.AssetDiscovery;
+using OpenTap.Metrics.Settings;
 
 namespace OpenTap.Metrics.UnitTest;
 
@@ -181,6 +182,34 @@ public class MetricManagerTest
         metrics = MetricManager.GetMetricInfos().ToArray();
 
         Assert.IsFalse(metrics.Any(m => m.MetricFullName == "INST \\ v"));
+    }
+
+    [Test]
+    public void TestResourceDeadLock()
+    {
+        
+        ComponentSettings.SetSettingsProfile("Bench", "ResourceTest");
+        InstrumentSettings.Current.Clear();
+        var instrTest = new IdleResultTestInstrument();
+        var instrTest2 = new IdleResultTestInstrument();
+
+        InstrumentSettings.Current.Add(instrTest);
+        InstrumentSettings.Current.Add(instrTest2);
+        InstrumentSettings.Current.Save();
+
+        var vMetric = (IMetricsSettingsItem)TypeData.GetTypeData("Metric:v").CreateInstance();
+        MetricsSettings.Current.Clear();
+        MetricsSettings.Current.Add(vMetric);
+        MetricsSettings.Current.Save();
+        MetricsSettings.Current.Invalidate();
+        
+        InstrumentSettings.Current.Invalidate();
+        
+        PluginManager.SearchAsync();
+
+        MetricsSettings.Current.ToArray();
+
+
     }
 
     [Test]

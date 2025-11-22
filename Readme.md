@@ -399,7 +399,7 @@ instance of a new `Push` metric.
 
 # Assets
 
-This package also contains definitions for the `IAssetDiscovery` plugin type and
+This package also contains definitions for the `IAssetDiscoveryProvider` plugin type and
 related functionality. This is a semi independent feature, but it is related to
 metrics in that it metrics can be associated with an asset instead of the default
 of associating the metric with the entire system.
@@ -407,7 +407,7 @@ of associating the metric with the entire system.
 ## Discovering Assets
 
 To add asset discovery capabilities to opentap, you should return a list of 
-`DiscoveredAsset` from the `DiscoverAssets` method in your `IAssetDiscovery` 
+`IAsset` from the `DiscoverAssets` method in your `IAssetDiscoveryProvider` 
 implementation. When used in e.g. a Runner DiscoverAssets() will be called periodically
 so the results can be collected in KS8500.
     
@@ -421,13 +421,13 @@ public class MyAssetDiscovery : IAssetDiscovery
 }
 ```
 
-Each `DiscoveredAsset` should contain a unique `AssetIdentifier`, a `Manufacturer` and a `Model`. The identifier
+Each `IAsset` must contain a unique `AssetIdentifier`, a `Manufacturer` and a `Model`. The identifier
 is used to identify this specific asset and should be the same if the asset is later connected
 to a different system (e.g. Runner/Station). The manufacturer and model together describe the asset
 model and can be be used to lookup a suitable driver for the asset.
 
-`IAssetDiscovery` implementations can also specialize `DiscoveredAsset` to include additional
-information (e.g. firmware version).
+`IAssetDiscoveryProvider` implementations can also add additional properties when implementing the `IAsset` 
+model to include additional information (e.g. firmware version).
 
 As assets from different implementations are usually displayed in the same list, it is recommended
 to use these property Display names when applicable to provide a consistent user experience.
@@ -445,10 +445,13 @@ to use these property Display names when applicable to provide a consistent user
 | Class | The class of the asset (e.g. HID device class for USB) |
 | InterfaceType | The type of interface used to connect to the asset (e.g. GPIB,LAN,PXI,USB) |
 
-Some additional properties are reserved for internal use and should not be set by the `IAssetDiscovery` implementation:
+Some additional metadata is attached to the asset. These values does not have to be specified by the 
+`IAssetDiscoveryProvider` implementation. However, many of them can be overridden if more control is needed,
+e.g. a provider can set LastSeen to a specific time if the provider is returning older cached results.
 
 | Property Display Name | Meaning |
 | --- | --- |
+| LastSeen | The last time the asset was returned from DiscoverAssets(). |
 | Provider | The name of the IAssetDiscovery implementation returning the asset |
 | RunnerId | The ID of the Runner/Station that discovered the asset |
 | ProviderError | An error message explaining why assets could not be discovered |

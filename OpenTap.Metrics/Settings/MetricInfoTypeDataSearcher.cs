@@ -14,22 +14,26 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcher, ITypeDataSourceProv
 {
     public void Search()
     {
-        // _types = null;
     } 
+    
     private bool getting = false;
+    private MetricSpecifier[] _cache = [];
     private MetricSpecifier[] metricSpecifiers
     {
         get
         {
-            if (getting) return [];
+            if (getting) return _cache;
             {
                 getting = true;
                 try
                 {
-                    return MetricManager.GetMetricInfos()
+                    // Avoid deadlocking 
+                    using var _ = Session.Create(SessionOptions.OverlayComponentSettings);
+                    _cache = MetricManager.GetMetricInfos()
                         .Select(x => new MetricSpecifier(x.Member))
                         .Distinct()
                         .ToArray();
+                    return _cache;
                 }
                 finally
                 {

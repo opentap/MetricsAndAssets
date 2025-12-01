@@ -18,6 +18,9 @@ public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSe
 
     private void AddDefaultMetrics()
     {
+        // Ensure duts and instruments are both loaded. This is needed because MetricManager only looks at the cached values.
+        var _1 = InstrumentSettings.Current;
+        var _2 = DutSettings.Current;
         var existing = this.ToArray();
         var settings = TypeData.GetDerivedTypes<IMetricsSettingsItem>();
         foreach (var s in settings.OfType<MetricInfoTypeData>())

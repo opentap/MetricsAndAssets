@@ -12,8 +12,8 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <OutputPath>$(MSBuildThisFileDirectory)bin\$(Configuration)\</OutputPath>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(OS)' == 'WINDOWS_NT' AND '$(Configuration)' == 'Debug'">
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <!-- This is a dependency only in debug builds on windows because Live Results Panels requires a newer OpenTAP version -->
-        <OpenTapVersion>9.27.1</OpenTapVersion>
+        <OpenTapVersion>9.30.0</OpenTapVersion>
     </PropertyGroup>
 </Project>

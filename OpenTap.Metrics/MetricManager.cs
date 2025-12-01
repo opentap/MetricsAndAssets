@@ -86,7 +86,12 @@ public static class MetricManager
             }
         }
 
-        foreach (var metricSource in producers.Concat(InstrumentSettings.Current).Concat(DutSettings.Current))
+        // fetching ComponentSettings directly can lead to deadlocks because this function is called from a TypeData Searcher.
+        // Rely on cached component settings instead.
+        IEnumerable<IResource> instruments = ComponentSettings.GetCurrentFromCache(typeof(InstrumentSettings)) as InstrumentSettings ?? [];
+        IEnumerable<IResource> duts = ComponentSettings.GetCurrentFromCache(typeof(DutSettings)) as DutSettings ?? [];
+
+        foreach (var metricSource in producers.Concat(instruments).Concat(duts))
         {
 
             var type1 = TypeData.GetTypeData(metricSource);

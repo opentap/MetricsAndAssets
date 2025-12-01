@@ -28,7 +28,7 @@
     <FileVersion>$(ShortVersion).0</FileVersion> 
   </PropertyGroup>
   
-  <ItemGroup Condition="'$(OS)' == 'WINDOWS_NT' AND '$(Configuration)' == 'Debug'"> 
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'"> 
     <AdditionalOpenTapPackage Include="Editor"/>
     <AdditionalOpenTapPackage Include="Live Results Panel"/> 
   </ItemGroup>

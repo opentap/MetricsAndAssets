@@ -10,8 +10,7 @@ public class MetricInfoTypeDataProvider : ITypeDataProvider
     {
         if (identifier.StartsWith(MetricInfoTypeData.MetricTypePrefix))
         {
-            return TypeData.GetDerivedTypes<IMetricsSettingsItem>().OfType<MetricInfoTypeData>()
-                .FirstOrDefault(x => x.Name == identifier);
+            return TypeData.FromType(typeof(MetricsSettingsItem));
         }
 
         return null;

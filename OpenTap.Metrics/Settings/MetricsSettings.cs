@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace OpenTap.Metrics.Settings; 
@@ -39,6 +40,10 @@ public class MetricsSettings : ComponentSettingsList<MetricsSettings, IMetricsSe
 
         // Save the settings. This is needed to ensure metrics settings are persisted if
         // the plugin providing some metric is removed.
-        if (anyAdded) Save();
+        bool isOverlayContext = Session.Current.Options.HasFlag(SessionOptions.OverlayComponentSettings);
+        if (anyAdded && !isOverlayContext && !IsReadOnly) 
+        {
+            Save();
+        }
     }
 }

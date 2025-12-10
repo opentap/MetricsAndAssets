@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Linq;
 using NUnit.Framework;
 using OpenTap.Metrics.AssetDiscovery;
+using OpenTap.Metrics.Settings;
 
 namespace OpenTap.Metrics.UnitTest;
 
@@ -499,5 +500,13 @@ public class MetricManagerTest
                 Assert.That(m.MetaData["AssetID"], Is.EqualTo($"{mxa2.Manufacturer}{mxa2.Model}{mxa2.SerialNumber}"));
             }
         }
+    }
+
+    [Test]
+    public void TestSaveReadonlyMetrics()
+    {
+        using var session = Session.Create();
+        MetricsSettings.Current.Clear();
+        MetricsSettings.Current.Initialize();
     }
 }

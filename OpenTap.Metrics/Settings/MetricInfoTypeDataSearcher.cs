@@ -61,10 +61,18 @@ class MetricInfoTypeData : ITypeData
     public const string MetricTypePrefix = "Metric:";
     public readonly MetricSpecifier Specifier;
     private static readonly ConcurrentDictionary<MetricSpecifier, MetricInfoTypeData> _cache = [];
+    private static readonly ConcurrentDictionary<string, MetricInfoTypeData> _nameCache = [];
+
     public static MetricInfoTypeData FromMetricSpecifier(MetricSpecifier disc)
     {
         return _cache.GetOrAdd(disc, _ => new MetricInfoTypeData(disc));
     } 
+
+    public static MetricInfoTypeData FromMetricName(string name)
+    {
+        if (_nameCache.TryGetValue(name, out var td)) return td;
+        return null;
+    }
 
     private DisplayAttribute displayAttribute = null;
 
@@ -72,6 +80,7 @@ class MetricInfoTypeData : ITypeData
     {
         Specifier = specifier;
         BaseType = TypeData.FromType(typeof(MetricsSettingsItem));
+        _nameCache.TryAdd(this.Name, this);
     }
 
     private ITypeData innerType => BaseType;

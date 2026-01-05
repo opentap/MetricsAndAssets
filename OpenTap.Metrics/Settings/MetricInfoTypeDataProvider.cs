@@ -10,7 +10,7 @@ public class MetricInfoTypeDataProvider : ITypeDataProvider
     {
         if (identifier.StartsWith(MetricInfoTypeData.MetricTypePrefix))
         {
-            return TypeData.FromType(typeof(MetricsSettingsItem));
+            return (ITypeData)MetricInfoTypeData.FromMetricName(identifier) ?? TypeData.FromType(typeof(MetricsSettingsItem));
         }
 
         return null;

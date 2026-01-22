@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using OpenTap.Metrics.AssetDiscovery;
 using OpenTap.Metrics.Settings;
 
 namespace OpenTap.Metrics.UnitTest;
@@ -298,5 +299,22 @@ public class DynamicMetricTests
         Assert.That(metrics.Length, Is.GreaterThan(0));
         Assert.That(errors1, Is.Empty);
         Assert.That(errors2, Is.Empty);
+    }
+}
+
+public class TestAssetProvider : IAssetDiscoveryProvider
+{
+    public string Name { get; set; } = "Test";
+
+    public double Priority { get; } = 10;
+
+    public TestAssetProvider()
+    {
+        throw new Exception("This fails");
+    }
+
+    public DiscoveryResult DiscoverAssets()
+    {
+        return new DiscoveryResult();
     }
 }

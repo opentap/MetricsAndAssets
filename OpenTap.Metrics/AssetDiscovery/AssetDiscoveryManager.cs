@@ -38,7 +38,7 @@ public static class AssetDiscoveryManager
     {
         if (_cachedAssets == null || DateTime.Now - _lastPoll > CacheStaleTime)
             DiscoverAllAssets();
-        return _cachedAssets;
+        return new Dictionary<IAssetDiscoveryProvider, DiscoveryResult>(_cachedAssets);
     }
 
     private static DateTime _lastPoll = DateTime.MinValue;
@@ -73,7 +73,7 @@ public static class AssetDiscoveryManager
             /* lock on lockObj to wait for the other thread to finish */
             lock (lockObj)
             {
-                return _cachedAssets;
+                return new Dictionary<IAssetDiscoveryProvider, DiscoveryResult>(_cachedAssets);
             }
         }
 
@@ -119,7 +119,8 @@ public static class AssetDiscoveryManager
 
             _cachedAssets = assets;
             _lastPoll = DateTime.Now;
-            return assets;
+            /* return the result in a new dictionary to ensure callers can safely mutate the result without affecting users of the cache. */
+            return new Dictionary<IAssetDiscoveryProvider, DiscoveryResult>(assets);
         }
         finally
         {

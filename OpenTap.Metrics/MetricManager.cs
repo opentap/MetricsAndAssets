@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using OpenTap.Metrics.AssetDiscovery;
 
 namespace OpenTap.Metrics;
 
@@ -58,7 +59,7 @@ public static class MetricManager
     /// <returns></returns>
     public static IEnumerable<MetricInfo> GetMetricInfos()
     {
-        var types = TypeData.GetDerivedTypes<IMetricSource>().Where(x => x.CanCreateInstance);
+        var types = TypeData.GetDerivedTypes<IMetricSource>().Where(x => x.CanCreateInstance && !x.DescendsTo(TypeData.FromType(typeof(IAsset))));
         List<object> producers = new List<object>();
         foreach (var type in types)
         {
@@ -88,10 +89,12 @@ public static class MetricManager
 
         // fetching ComponentSettings directly can lead to deadlocks because this function is called from a TypeData Searcher.
         // Rely on cached component settings instead.
-        IEnumerable<IResource> instruments = ComponentSettings.GetCurrentFromCache(typeof(InstrumentSettings)) as InstrumentSettings ?? [];
-        IEnumerable<IResource> duts = ComponentSettings.GetCurrentFromCache(typeof(DutSettings)) as DutSettings ?? [];
+        IEnumerable<object> instruments = ComponentSettings.GetCurrentFromCache(typeof(InstrumentSettings)) as InstrumentSettings ?? [];
+        IEnumerable<object> duts = ComponentSettings.GetCurrentFromCache(typeof(DutSettings)) as DutSettings ?? [];
 
-        foreach (var metricSource in producers.Concat(instruments).Concat(duts))
+        var assets = AssetDiscoveryManager.DiscoverAllAssets().SelectMany(result => result.Value.Assets).ToArray();
+
+        foreach (var metricSource in producers.Concat(instruments).Concat(duts).Concat(assets))
         {
 
             var type1 = TypeData.GetTypeData(metricSource);

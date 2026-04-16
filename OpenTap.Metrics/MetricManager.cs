@@ -69,7 +69,10 @@ public static class MetricManager
 
     /// <summary> Get information about the metrics available to query. </summary>
     /// <returns></returns>
-    public static IEnumerable<MetricInfo> GetMetricInfos()
+    public static IEnumerable<MetricInfo> GetMetricInfos() => GetMetricInfos(false);
+
+    internal static IEnumerable<MetricInfo> GetMetricInfosCarefully() => GetMetricInfos(true);
+    private static IEnumerable<MetricInfo> GetMetricInfos(bool cautious)
     {
         var types = TypeData.GetDerivedTypes<IMetricSource>().Where(x => x.CanCreateInstance && !x.DescendsTo(TypeData.FromType(typeof(IAsset))));
         List<object> producers = new List<object>();
@@ -104,7 +107,8 @@ public static class MetricManager
         IEnumerable<object> instruments = ComponentSettings.GetCurrentFromCache(typeof(InstrumentSettings)) as InstrumentSettings ?? [];
         IEnumerable<object> duts = ComponentSettings.GetCurrentFromCache(typeof(DutSettings)) as DutSettings ?? [];
 
-        var assets = AssetDiscoveryManager.GetRecentAssets().SelectMany(result => result.Value.Assets).ToArray();
+        /* in some contexts, calling this function will deadlock. If the cautious flag is set, refuse to call DiscoverAssets() and use a cache instead if available */
+        var assets = (cautious ? AssetDiscoveryManager.GetCachedAssets() : AssetDiscoveryManager.GetRecentAssets()).SelectMany(result => result.Value.Assets).ToArray();
 
         foreach (var metricSource in producers.Concat(instruments).Concat(duts).Concat(assets).Distinct(new ReferenceEqualsEqualityComparer()))
         {

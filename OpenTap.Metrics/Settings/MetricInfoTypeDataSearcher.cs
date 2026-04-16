@@ -26,7 +26,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcher, ITypeDataSourceProv
                 getting = true;
                 try
                 {
-                    return MetricManager.GetMetricInfos()
+                    return MetricManager.GetMetricInfosCarefully()
                         .Select(x => new MetricSpecifier(x.Member))
                         .Distinct()
                         .ToArray();

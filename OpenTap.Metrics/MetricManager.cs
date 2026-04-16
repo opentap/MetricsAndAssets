@@ -16,6 +16,18 @@ namespace OpenTap.Metrics;
 /// </summary>
 public static class MetricManager
 {
+    class ReferenceEqualsEqualityComparer : IEqualityComparer<object>
+    {
+        public new bool Equals(object x, object y)
+        {
+            return ReferenceEquals(x, y);
+        }
+
+        public int GetHashCode(object obj)
+        {
+            return obj.GetHashCode();
+        }
+    }
     /// <summary>
     /// NOTE: This method only exists to clear between unit tests.
     /// This should never be used
@@ -94,7 +106,7 @@ public static class MetricManager
 
         var assets = AssetDiscoveryManager.DiscoverAllAssets().SelectMany(result => result.Value.Assets).ToArray();
 
-        foreach (var metricSource in producers.Concat(instruments).Concat(duts).Concat(assets))
+        foreach (var metricSource in producers.Concat(instruments).Concat(duts).Concat(assets).Distinct(new ReferenceEqualsEqualityComparer()))
         {
 
             var type1 = TypeData.GetTypeData(metricSource);

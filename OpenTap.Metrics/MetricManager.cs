@@ -104,7 +104,7 @@ public static class MetricManager
         IEnumerable<object> instruments = ComponentSettings.GetCurrentFromCache(typeof(InstrumentSettings)) as InstrumentSettings ?? [];
         IEnumerable<object> duts = ComponentSettings.GetCurrentFromCache(typeof(DutSettings)) as DutSettings ?? [];
 
-        var assets = AssetDiscoveryManager.DiscoverAllAssets().SelectMany(result => result.Value.Assets).ToArray();
+        var assets = AssetDiscoveryManager.GetRecentAssets().SelectMany(result => result.Value.Assets).ToArray();
 
         foreach (var metricSource in producers.Concat(instruments).Concat(duts).Concat(assets).Distinct(new ReferenceEqualsEqualityComparer()))
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenTap.Metrics.AssetDiscovery;
@@ -29,12 +30,54 @@ public static class AssetDiscoveryManager
         }
     }
 
+
+    /* Asset providers can be really slow, so it is useful internally to have a mechanism for getting somewhat recent assets.
+     * The alternative would be a massive slowdown since this path is triggered by TypeData searchers */
+    private static readonly TimeSpan CacheStaleTime = TimeSpan.FromSeconds(3);
+    internal static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> GetRecentAssets()
+    {
+        if (_cachedAssets == null || DateTime.Now - _lastPoll > CacheStaleTime)
+            DiscoverAllAssets();
+        return _cachedAssets;
+    }
+
+    private static DateTime _lastPoll = DateTime.MinValue;
+    private static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> _cachedAssets = null;
+
+    internal static Task<T> StartAwaitableTapThread<T>(Func<T> action)
+    {
+        var result = new TaskCompletionSource<T>();
+        TapThread.Start(() =>
+        {
+            try
+            {
+                result.SetResult(action());
+            }
+            catch (Exception inner)
+            {
+                result.SetException(inner);
+            }
+        });
+        return result.Task;
+    }
+
+
     /// <summary>
     /// Returns all discovered assets from all available providers.
     /// </summary>
     public static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> DiscoverAllAssets()
     {
-        lock (lockObj)
+        /* if another thread is holding lockObj, we should just return that result instead of recomputing it. */
+        if (!Monitor.TryEnter(lockObj, 0)) 
+        {
+            /* lock on lockObj to wait for the other thread to finish */
+            lock (lockObj)
+            {
+                return _cachedAssets;
+            }
+        }
+
+        try
         {
             TimeSpan timeout = TimeSpan.FromSeconds(10);
             Dictionary<IAssetDiscoveryProvider, DiscoveryResult> assets =
@@ -47,7 +90,7 @@ public static class AssetDiscoveryManager
                 // If the provider is already in the list, the Discover query timed out in the last time.
                 // In that case, we should wait for the previous query to complete instead of starting a new one.
                 if (_workQueue.ContainsKey(provider) == false)
-                    _workQueue.TryAdd(provider, Task.Run(() => DiscoverAssets(provider)));
+                    _workQueue.TryAdd(provider, StartAwaitableTapThread(() => DiscoverAssets(provider)));
             }
 
             Task.WaitAll(_workQueue.Values.ToArray<Task>(), timeout);
@@ -74,7 +117,13 @@ public static class AssetDiscoveryManager
                 }
             }
 
+            _cachedAssets = assets;
+            _lastPoll = DateTime.Now;
             return assets;
+        }
+        finally
+        {
+            Monitor.Exit(lockObj);
         }
     }
 

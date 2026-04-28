@@ -1,12 +1,8 @@
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
-using System.Threading;
 
 namespace OpenTap.Metrics.Settings;
 
@@ -26,7 +22,7 @@ public class MetricInfoTypeDataSearcher : ITypeDataSearcher, ITypeDataSourceProv
                 getting = true;
                 try
                 {
-                    return MetricManager.GetMetricInfosCarefully()
+                    return MetricManager.GetMetricInfos()
                         .Select(x => new MetricSpecifier(x.Member))
                         .Distinct()
                         .ToArray();

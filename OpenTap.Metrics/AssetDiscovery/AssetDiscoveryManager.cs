@@ -33,17 +33,6 @@ public static class AssetDiscoveryManager
 
     internal static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> GetCachedAssets() => new(_cachedAssets);
 
-    /* Asset providers can be really slow, so it is useful internally to have a mechanism for getting somewhat recent assets.
-     * The alternative would be a massive slowdown since this path is triggered by TypeData searchers */
-    private static readonly TimeSpan CacheStaleTime = TimeSpan.FromSeconds(2);
-    internal static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> GetRecentAssets()
-    {
-        if (_cachedAssets == null || DateTime.Now - _lastPoll > CacheStaleTime)
-            DiscoverAllAssets();
-        return new(_cachedAssets);
-    }
-
-    private static DateTime _lastPoll = DateTime.MinValue;
     private static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> _cachedAssets = [];
 
     /// <summary>
@@ -101,7 +90,6 @@ public static class AssetDiscoveryManager
                 }
             }
 
-            _lastPoll = DateTime.Now;
             _cachedAssets = assets;
             /* return the result in a new dictionary to ensure callers can safely mutate the result without affecting users of the cache. */
             return new(_cachedAssets);

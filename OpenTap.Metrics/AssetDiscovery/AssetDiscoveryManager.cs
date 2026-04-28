@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpenTap.Metrics.AssetDiscovery;
@@ -29,12 +30,27 @@ public static class AssetDiscoveryManager
         }
     }
 
+
+    internal static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> GetCachedAssets() => new(_cachedAssets);
+
+    private static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> _cachedAssets = [];
+
     /// <summary>
     /// Returns all discovered assets from all available providers.
     /// </summary>
     public static Dictionary<IAssetDiscoveryProvider, DiscoveryResult> DiscoverAllAssets()
     {
-        lock (lockObj)
+        /* if another thread is holding lockObj, we should just return that result instead of recomputing it. */
+        if (!Monitor.TryEnter(lockObj, 0)) 
+        {
+            /* lock on lockObj to wait for the other thread to finish */
+            lock (lockObj)
+            {
+                return new(_cachedAssets);
+            }
+        }
+
+        try
         {
             TimeSpan timeout = TimeSpan.FromSeconds(10);
             Dictionary<IAssetDiscoveryProvider, DiscoveryResult> assets =
@@ -47,7 +63,7 @@ public static class AssetDiscoveryManager
                 // If the provider is already in the list, the Discover query timed out in the last time.
                 // In that case, we should wait for the previous query to complete instead of starting a new one.
                 if (_workQueue.ContainsKey(provider) == false)
-                    _workQueue.TryAdd(provider, Task.Run(() => DiscoverAssets(provider)));
+                    _workQueue.TryAdd(provider, ReflectionHelper.StartAwaitableTapThread(() => DiscoverAssets(provider)));
             }
 
             Task.WaitAll(_workQueue.Values.ToArray<Task>(), timeout);
@@ -74,7 +90,13 @@ public static class AssetDiscoveryManager
                 }
             }
 
-            return assets;
+            _cachedAssets = assets;
+            /* return the result in a new dictionary to ensure callers can safely mutate the result without affecting users of the cache. */
+            return new(_cachedAssets);
+        }
+        finally
+        {
+            Monitor.Exit(lockObj);
         }
     }
 

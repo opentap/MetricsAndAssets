@@ -37,11 +37,6 @@
     <InternalsVisibleTo Include="OpenTap.Metrics.UnitTest" />
   </ItemGroup>
 
-
-  <ItemGroup Condition="$(OS) == 'UNIX' AND '$(Configuration)' == 'Debug'">
-    <OpenTapPackageReference Include="TUI" version="1"/>
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
     <PackageReference Include="OpenTAP" Version="$(OpenTapVersion)" />

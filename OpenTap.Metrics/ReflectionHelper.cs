@@ -4,10 +4,11 @@
 // file, you can obtain one at http://mozilla.org/MPL/2.0/.
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace OpenTap.Metrics;
 
-static class ReflectionHelpoer
+static class ReflectionHelper
 {
     /// <summary>
     /// Returns true if a type is numeric.
@@ -51,6 +52,23 @@ static class ReflectionHelpoer
     public static bool IsNumeric(this ITypeData t)
     {
         return t.AsTypeData()?.Type.IsNumeric() == true;
+    }
+
+    internal static Task<T> StartAwaitableTapThread<T>(Func<T> action)
+    {
+        var result = new TaskCompletionSource<T>();
+        TapThread.Start(() =>
+        {
+            try
+            {
+                result.SetResult(action());
+            }
+            catch (Exception inner)
+            {
+                result.SetException(inner);
+            }
+        });
+        return result.Task;
     }
 
     struct OnceLogToken

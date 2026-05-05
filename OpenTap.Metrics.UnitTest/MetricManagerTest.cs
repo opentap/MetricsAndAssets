@@ -77,6 +77,67 @@ public class FullMetricSource : IMetricSource
 [TestFixture]
 public class MetricManagerTest
 {
+    public class MetricAssetDiscoverer : AssetDiscoveryProvider
+    {
+        public MetricAssetDiscoverer() { Name = "Test Asset Discoverer"; }
+        public class TestAsset(int id) : IAsset, IMetricSource, IOnPollMetricsCallback
+        {
+            public string Manufacturer => "Keysight";
+            public string Model => "Dummy";
+            public string AssetIdentifier => $"Dummy:{id}";
+
+            [Metric("In Use", "Test Asset Metrics", MetricKind.Poll, DefaultEnabled = true, DefaultPollRate = 60)]
+            public double InUse { get; set; } = 1;
+
+            [Metric("Not Added", "Test Asset Metrics", MetricKind.Poll, DefaultEnabled = false, DefaultPollRate = 60)]
+            public double NotAdded { get; set; } = 2;
+
+            public void OnPollMetrics(IEnumerable<MetricInfo> metrics)
+            {
+                InUse *= id;
+            }
+        }
+
+        internal static readonly TestAsset[] _assets = [new TestAsset(1), new TestAsset(2)];
+        public override DiscoveryResult DiscoverAssets()
+        {
+            return new DiscoveryResult()
+            {
+                IsSuccess = true,
+                Assets = _assets,
+            };
+        }
+    }
+
+    [Test]
+    public void TestDiscoveredAssetMetrics()
+    {
+        var assets = AssetDiscoveryManager.DiscoverAllAssets();
+
+        var enabledMetrics = MetricsSettings.Current.OfType<MetricsSettingsItem>().Where(x => x.IsEnabled).ToArray();
+        var a1 = enabledMetrics.FirstOrDefault(m => m.Name == "In Use");
+        Assert.That(a1, Is.Not.Null);
+        var a2 = enabledMetrics.FirstOrDefault(m => m.Name == "Not Added");
+        Assert.That(a2, Is.Null);
+
+        var poll1 = MetricManager.PollMetrics(a1.Metrics).ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(poll1, Has.Length.EqualTo(2));
+            /* OnPoll sets value *= id */
+            Assert.That(poll1[0].Value, Is.EqualTo(1));
+            Assert.That(poll1[1].Value, Is.EqualTo(2));
+        });
+        var poll2 = MetricManager.PollMetrics(a1.Metrics).ToArray();
+        Assert.Multiple(() =>
+        {
+            Assert.That(poll2, Has.Length.EqualTo(2));
+            /* OnPoll sets value *= id */
+            Assert.That(poll2[0].Value, Is.EqualTo(1));
+            Assert.That(poll2[1].Value, Is.EqualTo(4));
+        });
+    }
+
     public class IdleResultTestInstrument : Instrument, IOnPollMetricsCallback
     {
         public IdleResultTestInstrument()

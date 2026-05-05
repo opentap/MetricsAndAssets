@@ -99,7 +99,7 @@ public class DiscoveryResult
 /// Interface for an object that represents an asset. 
 /// Instruments and other Resources should implement this interface if they want to attach metrics to the asset.
 /// </summary>
-public interface IAsset
+public interface IAsset : ITapPlugin
 {
     /// <summary>
     /// The manufacturer of the asset. E.g. "Keysight". 

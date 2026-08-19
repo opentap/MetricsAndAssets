@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using Newtonsoft.Json;
 
 namespace OpenTap.Metrics.AssetDiscovery;
 
@@ -120,7 +119,6 @@ public interface IAsset : ITapPlugin
     /// E.g. for an Instrument, this could be a combination of Manufacturer, Model and serial number.
     /// </summary>
     [MetaData(Name = "AssetID")] // Don't change this name as it is used to associate metrics with the asset.
-    [JsonProperty("AssetID")]
     [Display("Asset Identifier")]
     string AssetIdentifier { get; }
 }

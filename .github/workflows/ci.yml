@@ -13,10 +13,9 @@ env:
 
 jobs:
   GetVersion:
-    runs-on:
-       group: OpenTAP-SpokeVPC
-       labels:  [Linux, X64]
+    runs-on: codebuild-GitHubLinuxCodebuild-${{ github.run_id }}-${{ github.run_attempt }}
     container: ghcr.io/opentap/oci-images/build-dotnet:latest
+    timeout-minutes: 5
     outputs:
       ShortVersion: ${{ steps.gitversion.outputs.ShortVersion }}
       GitVersion: ${{ steps.gitversion.outputs.GitVersion }}
@@ -27,10 +26,9 @@ jobs:
         uses: opentap/get-gitversion@main
 
   Build:
-    runs-on:
-       group: OpenTAP-SpokeVPC
-       labels:  [Linux, X64]
+    runs-on: codebuild-GitHubLinuxCodebuild-${{ github.run_id }}-${{ github.run_attempt }}
     container: ghcr.io/opentap/oci-images/build-dotnet:latest
+    timeout-minutes: 5
     needs: GetVersion
     env:
       ShortVersion: ${{ needs.GetVersion.outputs.ShortVersion }}
@@ -63,7 +61,7 @@ jobs:
           TAP_SIGN_AUTH: ${{ secrets.TAP_SIGN_AUTH }}
           TAP_SIGN_CERT: ${{ github.workspace }}/sign.cer
           KS8500_REPO_TOKEN: ${{ secrets.KS8500_REPO_TOKEN }}
-          SIGN_VERSION: "1.5.0-beta.7+8118ecec"
+          SIGN_VERSION: "1.6.0"
       # Upload the package so it can be downloaded from GitHub, 
       # and consumed by other steps in this workflow
       
@@ -76,10 +74,9 @@ jobs:
             bin/Release/*.TapPackage
 
   UnitTests:
-    runs-on:
-       group: OpenTAP-SpokeVPC
-       labels:  [Linux, X64]
+    runs-on: codebuild-GitHubLinuxCodebuild-${{ github.run_id }}-${{ github.run_attempt }}
     container: ghcr.io/opentap/oci-images/build-dotnet:latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -95,10 +92,9 @@ jobs:
 
   publish:
     if: github.ref == 'refs/heads/main' || contains(github.ref, 'refs/heads/release') || contains(github.ref, 'refs/tags/v')
-    runs-on:
-       group: OpenTAP-SpokeVPC
-       labels:  [Linux, X64]
+    runs-on: codebuild-GitHubLinuxCodebuild-${{ github.run_id }}-${{ github.run_attempt }}
     container: ghcr.io/opentap/oci-images/build-dotnet:latest
+    timeout-minutes: 5
     needs: Build
     steps:
       - name: Download binaries

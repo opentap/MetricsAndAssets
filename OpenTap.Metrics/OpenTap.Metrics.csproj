@@ -17,7 +17,7 @@
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
     <OpenTapPackageReference Include="Sign" Version="$(SIGN_VERSION)" Reference="False"  Repository="https://internal.automation.keysight.com/api/repository" Token="$(KS8500_REPO_TOKEN)"/>
-    <OpenTapPackageReference Include="Keg" Version="0.1.0-beta.69+31496da2" Reference="False" />
+    <OpenTapPackageReference Include="Keg" Version="0.3.0-beta.2+7d702def" Reference="False" />
   </ItemGroup>
   
   <!-- Automatic assembly versioning in pipeline-->
